@@ -24,14 +24,14 @@ public class CameraShake : MonoBehaviour
     void Update()
     {
         if(enableCameraShake)
-            shakeCamera();
+            ShakeCamera();
         
         if(enableAimPunch)
-            aimPunch();
+            AimPunch();
     }
 
     // Z Shake
-    private void shakeCamera()
+    private void ShakeCamera()
     {
         float shake = Mathf.Pow(trauma, 2);
 
@@ -46,7 +46,7 @@ public class CameraShake : MonoBehaviour
     }
 
     // Y Punch
-    private void aimPunch()
+    private void AimPunch()
     {
         float shake = Mathf.Pow(punchTrauma, 2);
 

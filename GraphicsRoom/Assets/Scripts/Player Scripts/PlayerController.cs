@@ -23,6 +23,7 @@ public class PlayerController : MonoBehaviour
     [Header("Gravity")]
     public float gravity = 6f;
     public float velocity = 0.0f;
+    public float slopeRayLength = 1.5f;
     private PlayerForce forceModifier;
 
     [Header("Conditions")]
@@ -38,7 +39,7 @@ public class PlayerController : MonoBehaviour
     private PlayerCamera cameraProperties;
     private CameraShake playerShake;
     
-    void Start()
+    void Awake()
     {
         // Player Camera
         playerCamera = transform.GetChild(0);
@@ -55,10 +56,7 @@ public class PlayerController : MonoBehaviour
         baseJumpHeight = jumpHeight;
     }
     private void PlayerInput()
-    {
-        // Player movement function
-        playerMove();
-            
+    {            
         // Jumping
         if (Input.GetKeyDown(KeyCode.Space))
             Jump();
@@ -72,6 +70,7 @@ public class PlayerController : MonoBehaviour
     {
         if (!cameraProperties.enableSpectator)
         {
+            PlayerMove();
             PlayerInput();
             EssentialStatements();
         }
@@ -86,7 +85,7 @@ public class PlayerController : MonoBehaviour
         transform.eulerAngles = bodyRot;
         
         // Prevent player from excessive floating
-        if (headCheck())
+        if (HeadCheck() && isJumping)
         {
             velocity = -0.75f;
         }
@@ -102,7 +101,7 @@ public class PlayerController : MonoBehaviour
     }
     
     // Handles gravity, movement, and movement on terrain
-    private void playerMove()
+    private void PlayerMove()
     {
         // Player Input
         horizontal = Input.GetAxis("Horizontal");
@@ -125,7 +124,7 @@ public class PlayerController : MonoBehaviour
 
         playerCC.Move(playerInput * Time.deltaTime);
         
-        if((headCheck() && isJumping) || playerCC.isGrounded)
+        if((HeadCheck() && isJumping) || playerCC.isGrounded)
         {
             if(velocity < -7f)
             {
@@ -137,7 +136,7 @@ public class PlayerController : MonoBehaviour
         }
 
         // Slope Handling
-        if(onSlope())
+        if(OnSlope())
         {
             playerCC.Move(Vector3.down * 5 * Time.deltaTime);
         }
@@ -163,7 +162,7 @@ public class PlayerController : MonoBehaviour
 
             jumpHeight = jumpHeight * .3f;
         }
-        else if (!headCheck())
+        else if (!HeadCheck())
         {
             playerCC.height = baseHeight;
 
@@ -178,7 +177,7 @@ public class PlayerController : MonoBehaviour
         // Adjust player position for resize
         if (playerCC.isGrounded)
         {
-            if (!headCheck())
+            if (!HeadCheck())
             {
                 playerCC.Move(Vector3.up * .8f);
             }
@@ -187,7 +186,7 @@ public class PlayerController : MonoBehaviour
     }
 
     // True if object is decteted above head, false if not
-    private bool headCheck()
+    private bool HeadCheck()
     {
         float rayLength = 1.0f;
 
@@ -198,9 +197,8 @@ public class PlayerController : MonoBehaviour
     }
 
     // Check if player is on a slope
-    private bool onSlope()
+    private bool OnSlope()
     {
-        float slopeRayLength = 1.5f;
         if (isJumping)
             return false;
 

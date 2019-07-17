@@ -82,10 +82,10 @@ public class PlayerCamera : MonoBehaviour
 
         // Crouching
         if (cameraCanTransition)
-            adjustCamera();
+            AdjustCamera();
     }
 
-    private void adjustCamera()
+    private void AdjustCamera()
     {
         float stand = .2f;
         float crouch = .6f;

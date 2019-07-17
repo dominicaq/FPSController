@@ -6,10 +6,10 @@ public class PlayerForce : MonoBehaviour
 {
     [Header("Character Force")]
     public bool enableImpactForce = true;
-    private bool isFlying = false;
-    private bool hitWall = false;
+    public bool isFlying = false;
+    public bool hitWall = false;
 
-    [Header("Impact Vectors")]
+    [Header("Force Vector")]
     public Vector3 impact = Vector3.zero;
     // Necessary for collision if statement
     private Vector3 tempImpact = Vector3.zero;
@@ -17,11 +17,7 @@ public class PlayerForce : MonoBehaviour
     // Scripts
     private CharacterController playerCC;
     private PlayerController playerMovement;
-
-    [Header("Debug")]
-    public bool enableDebugging = false;
-
-    void Start()
+    void Awake()
     {
         playerCC = GetComponent<CharacterController>();
         playerMovement = GetComponent<PlayerController>();
@@ -30,77 +26,87 @@ public class PlayerForce : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(enableDebugging)
-            Debug.DrawRay(transform.position, impact, Color.green);
-
         if(enableImpactForce)
         {
-            playerImpulse();
-
-            if(hitWall)
+            if(hitWall && !playerCC.isGrounded)
             {
-                impact = Vector3.Lerp(impact, Vector3.zero, Time.deltaTime * 15f);
-                playerCC.Move(Vector3.down * Time.deltaTime);
-                if(playerCC.isGrounded)
-                {
-                    hitWall = false;
-                }
+                impact = Vector3.Lerp(impact, Vector3.zero, Time.deltaTime * 10f);
             }
+            
+            PlayerImpulse();
         }
     }
     
     public void AddForce(Vector3 dir)
     {
         isFlying = true;
-
-        // Double strength if player is jumping
-        if(playerMovement.isJumping)
+        // Additional strength if player is jumping
+        if(playerMovement.isCrouching && playerMovement.isJumping)
         {
-            dir.y = dir.y * 1.5f;
+            dir.y = dir.y * 1.25f;
         }
 
+        playerMovement.velocity = 0;
         impact -= Vector3.Reflect(dir, Vector3.zero);
         tempImpact = impact;
     }    
 
     public void AddUpwardForce(float force)
     {
-        playerMovement.velocity += Mathf.Sqrt(2 * force);
+        playerMovement.velocity += Mathf.Sqrt(force);
     }
 
-    private void playerImpulse()
+    private void PlayerImpulse()
     {
-        if (impact.magnitude > .3f) 
+        if (impact.magnitude != 0) 
         {
             impact = Vector3.Lerp(impact, Vector3.zero, Time.deltaTime);
-        }
 
-        // Decelerate
-        if(playerCC.isGrounded)
-        {
-            impact = Vector3.Lerp(impact, Vector3.zero, Time.deltaTime * 5f );
-            impact.y = 0;
-
-            // Decelerate faster if player input detected
-            if (playerMovement.horizontal != 0 || playerMovement.vertical != 0)
+            // Decelerate
+            if(playerCC.isGrounded)
             {
-                impact = Vector3.Lerp(impact, Vector3.zero, Time.deltaTime * 10f );
+                impact = Vector3.Lerp(impact, Vector3.zero, Time.deltaTime * 5f );
+                impact.y = 0;
+
+                // Decelerate faster if player input detected
+                if ((playerMovement.horizontal != 0 || playerMovement.vertical != 0))
+                {
+                    impact = Vector3.Lerp(impact, Vector3.zero, Time.deltaTime * 10f );
+                }
             }
         }
-
+            
         // Finalization
-        playerCC.Move(impact * Time.deltaTime);
+        if(impact.magnitude > 1 || impact.magnitude < -1)
+        {
+            playerCC.Move(impact * Time.deltaTime);
+        }
+        else if (playerCC.isGrounded)
+        {
+            impact = Vector3.zero;
+            isFlying = false;
+            hitWall = false;
+        }
     }
 
     // DON'T USE MOVEMENT FUNCTIONS INSIDE, STACKOVERFLOW ERROR WILL OCCUR
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
         // If player hits a wall while being launched, nullify impact immediately
-        if(Physics.Raycast(transform.position, tempImpact * -1, playerCC.radius) && !playerMovement.isJumping && isFlying)
+        float rayLength = 0.5f;
+        if(Physics.SphereCast(transform.position, playerCC.radius / 1.5f, tempImpact, out RaycastHit hitInfo, rayLength) && isFlying)
         {
             tempImpact = Vector3.zero;
             hitWall = true;
-            isFlying = false;
         }
+    }
+
+    void OnDrawGizmos()
+    { 
+        // Draw a yellow sphere at the transform's position
+        float gizmoRayLength = 0.1f;
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawLine(transform.position, transform.position + impact * gizmoRayLength);
+        Gizmos.DrawWireSphere(transform.position + impact * gizmoRayLength, 0.5f / 1.5f);
     }
 }

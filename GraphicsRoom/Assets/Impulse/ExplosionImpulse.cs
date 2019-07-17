@@ -23,28 +23,22 @@ public class ExplosionImpulse : MonoBehaviour
         audioData = GetComponent<AudioSource>();
         audioData.Play(0);
 
-        linger += Time.deltaTime;
-        Destroy(gameObject, 1f);
+        // Linger long enough for sound to finish playing
+        Destroy(gameObject, 0.1f);
     }
 
     private void OnTriggerEnter(Collider hit)
     {
-        if (hit.tag == "Player" && linger <= 0.02f)
-        {
-            playerMovement = hit.GetComponent<CharacterController>();
-            forceModifier = hit.GetComponent<PlayerForce>();
+        playerMovement = hit.GetComponent<CharacterController>();
+        forceModifier = hit.GetComponent<PlayerForce>();
 
-            float forceAmp = Vector3.Distance(hit.transform.position, transform.position);
+        // Direction of explosion
+        direction = transform.position - hit.transform.position;
+        direction.y /= 2;
+        direction.Normalize();
 
-            // Zero for new force
-            forceModifier.impact = Vector3.zero;
-            direction = transform.position - hit.transform.position;
-            direction.y /= 2;
-            direction.Normalize();
-
-            // Finalize
-            forceModifier.AddForce(direction * strength);
-        }
+        // Finalize
+        forceModifier.AddForce(direction * strength);
     }
 
     void OnDrawGizmos()
