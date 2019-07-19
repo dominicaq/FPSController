@@ -78,16 +78,11 @@ public class PlayerController : MonoBehaviour
 
     // For things that need constant updating
     private void EssentialStatements()
-    {
-        // Body rotation with camera
-        Vector3 bodyRot = playerCamera.eulerAngles;
-        bodyRot.x = 0f;
-        transform.eulerAngles = bodyRot;
-        
+    {        
         // Prevent player from excessive floating
-        if (HeadCheck() && isJumping)
+        if (HeadCheck() && isJumping && !forceModifier.isFlying)
         {
-            velocity = -0.75f;
+            velocity = -0.5f;
         }
 
         // Decelerate player when crouching
@@ -103,6 +98,11 @@ public class PlayerController : MonoBehaviour
     // Handles gravity, movement, and movement on terrain
     private void PlayerMove()
     {
+        // Body rotation with camera
+        Vector3 bodyRot = playerCamera.eulerAngles;
+        bodyRot.x = 0f;
+        transform.eulerAngles = bodyRot;
+
         // Player Input
         horizontal = Input.GetAxis("Horizontal");
         vertical = Input.GetAxis("Vertical");
@@ -124,7 +124,7 @@ public class PlayerController : MonoBehaviour
 
         playerCC.Move(playerInput * Time.deltaTime);
         
-        if((HeadCheck() && isJumping) || playerCC.isGrounded)
+        if(playerCC.isGrounded)
         {
             if(velocity < -7f)
             {
@@ -188,10 +188,7 @@ public class PlayerController : MonoBehaviour
     // True if object is decteted above head, false if not
     private bool HeadCheck()
     {
-        float rayLength = 1.0f;
-
-        if(isJumping)
-            rayLength = .6f;
+        float rayLength = .6f;
 
         return Physics.SphereCast(transform.position, playerCC.radius, Vector3.up, out RaycastHit hitInfo, rayLength);
     }
@@ -210,5 +207,12 @@ public class PlayerController : MonoBehaviour
         }
 
         return false;
+    }
+
+    void OnDrawGizmos()
+    { 
+        // Draw a yellow sphere at the transform's position
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireSphere(transform.position + Vector3.up * .6f, .5f);
     }
 }

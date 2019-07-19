@@ -12,7 +12,7 @@ public class PlayerForce : MonoBehaviour
     [Header("Force Vector")]
     public Vector3 impact = Vector3.zero;
     // Necessary for collision if statement
-    private Vector3 tempImpact = Vector3.zero;
+    private Vector3 impactLength = Vector3.zero;
 
     // Scripts
     private CharacterController playerCC;
@@ -30,7 +30,7 @@ public class PlayerForce : MonoBehaviour
         {
             if(hitWall && !playerCC.isGrounded)
             {
-                impact = Vector3.Lerp(impact, Vector3.zero, Time.deltaTime * 10f);
+                impact = Vector3.Lerp(impact, Vector3.zero, Time.deltaTime * 5f);
             }
             
             PlayerImpulse();
@@ -40,6 +40,7 @@ public class PlayerForce : MonoBehaviour
     public void AddForce(Vector3 dir)
     {
         isFlying = true;
+        hitWall = false;
         // Additional strength if player is jumping
         if(playerMovement.isCrouching && playerMovement.isJumping)
         {
@@ -48,7 +49,7 @@ public class PlayerForce : MonoBehaviour
 
         playerMovement.velocity = 0;
         impact -= Vector3.Reflect(dir, Vector3.zero);
-        tempImpact = impact;
+        impactLength = impact;
     }    
 
     public void AddUpwardForce(float force)
@@ -58,11 +59,11 @@ public class PlayerForce : MonoBehaviour
 
     private void PlayerImpulse()
     {
-        if (impact.magnitude != 0) 
+        if (impact.magnitude > .3f) 
         {
             impact = Vector3.Lerp(impact, Vector3.zero, Time.deltaTime);
 
-            // Decelerate
+            // Decelerate on ground
             if(playerCC.isGrounded)
             {
                 impact = Vector3.Lerp(impact, Vector3.zero, Time.deltaTime * 5f );
@@ -94,9 +95,9 @@ public class PlayerForce : MonoBehaviour
     {
         // If player hits a wall while being launched, nullify impact immediately
         float rayLength = 0.5f;
-        if(Physics.SphereCast(transform.position, playerCC.radius / 1.5f, tempImpact, out RaycastHit hitInfo, rayLength) && isFlying)
+        if(Physics.SphereCast(transform.position, playerCC.radius / 1.5f, impactLength, out RaycastHit hitInfo, rayLength) && isFlying)
         {
-            tempImpact = Vector3.zero;
+            impactLength = Vector3.zero;
             hitWall = true;
         }
     }

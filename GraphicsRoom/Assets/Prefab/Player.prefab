@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1851111938479400308}
   - component: {fileID: 1851111938479400203}
   - component: {fileID: 1851111938479400202}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -87,7 +87,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4655876793517560305}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -122,7 +122,7 @@ GameObject:
   - component: {fileID: 4655876793789854940}
   - component: {fileID: 4655876793789854943}
   - component: {fileID: 1851111938242643317}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: PlayerCamera
   m_TagString: MainCamera
   m_Icon: {fileID: 0}
@@ -245,7 +245,7 @@ GameObject:
   - component: {fileID: 4655876794145675146}
   - component: {fileID: 4655876794145675144}
   - component: {fileID: 4655876794145675147}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: PlayerCollider
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -297,14 +297,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22e898fe7ac2d4948b57aa2d148ab22e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  horizontal: 0
+  vertical: 0
   movementSpeed: 7
   crouchSpeed: 2.8
   jumpHeight: 0.3
   crouchRate: 3
-  isCrouching: 0
-  baseMoveSpeed: 0
-  pushForce: 0.5
   gravity: 3.75
   velocity: 0
-  characterMass: 3
-  enableImpactForce: 1
+  slopeRayLength: 1.5
+  isCrouching: 0
+  isJumping: 0
