@@ -1,36 +1,32 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class PlayerForce : MonoBehaviour
 {
-    [Header("Character Force")]
-    public bool enableImpactForce = true;
-    public bool isFlying = false;
-    public bool hitWall = false;
+    [Header("Character Force Conditions")]
+    [SerializeField] private bool enableImpactForce = true;
+    [SerializeField] private bool collidedWithWall = false;
 
     [Header("Force Vector")]
     public Vector3 impact = Vector3.zero;
-    // Necessary for collision if statement
-    private Vector3 impactLength = Vector3.zero;
 
     // Scripts
     private CharacterController playerCC;
     private PlayerController playerMovement;
-    void Awake()
+
+    private void Awake()
     {
         playerCC = GetComponent<CharacterController>();
         playerMovement = GetComponent<PlayerController>();
     }
 
     // Update is called once per frame
-    void Update()
+    private void Update()
     {
         if(enableImpactForce)
         {
-            if(hitWall && !playerCC.isGrounded)
+            if(collidedWithWall && !playerCC.isGrounded)
             {
-                impact = Vector3.Lerp(impact, Vector3.zero, Time.deltaTime * 5f);
+                impact = Vector3.Lerp(impact, Vector3.zero, Time.deltaTime * 2.5f);
             }
             
             PlayerImpulse();
@@ -39,8 +35,9 @@ public class PlayerForce : MonoBehaviour
     
     public void AddForce(Vector3 dir)
     {
-        isFlying = true;
-        hitWall = false;
+        playerMovement.isFlying = true;
+        collidedWithWall = false;
+
         // Additional strength if player is jumping
         if(playerMovement.isCrouching && playerMovement.isJumping)
         {
@@ -49,12 +46,12 @@ public class PlayerForce : MonoBehaviour
 
         playerMovement.velocity = 0;
         impact -= Vector3.Reflect(dir, Vector3.zero);
-        impactLength = impact;
     }    
 
-    public void AddUpwardForce(float force)
+    public void AddForce(float force)
     {
-        playerMovement.velocity += Mathf.Sqrt(force);
+        playerMovement.isJumping = true;
+        playerMovement.velocity = Mathf.Sqrt(force);
     }
 
     private void PlayerImpulse()
@@ -70,10 +67,16 @@ public class PlayerForce : MonoBehaviour
                 impact.y = 0;
 
                 // Decelerate faster if player input detected
-                if ((playerMovement.horizontal != 0 || playerMovement.vertical != 0))
+                if ((Input.GetAxis("Horizontal") != 0 || Input.GetAxis("Vertical") != 0))
                 {
                     impact = Vector3.Lerp(impact, Vector3.zero, Time.deltaTime * 10f );
                 }
+            }
+
+            // Prevent impact from pushing player into ceiling
+            if(playerMovement.HeadCheck())
+            {
+                impact = Vector3.Lerp(impact, Vector3.zero, Time.deltaTime * 30f);
             }
         }
             
@@ -85,8 +88,8 @@ public class PlayerForce : MonoBehaviour
         else if (playerCC.isGrounded)
         {
             impact = Vector3.zero;
-            isFlying = false;
-            hitWall = false;
+            playerMovement.isFlying = false;
+            collidedWithWall = false;
         }
     }
 
@@ -95,10 +98,15 @@ public class PlayerForce : MonoBehaviour
     {
         // If player hits a wall while being launched, nullify impact immediately
         float rayLength = 0.5f;
-        if(Physics.SphereCast(transform.position, playerCC.radius / 1.5f, impactLength, out RaycastHit hitInfo, rayLength) && isFlying)
+
+        // Sphere cast or ray cast and is flying
+        bool isValid = (Physics.SphereCast(transform.position, playerCC.radius / 1.5f, impact, out RaycastHit hitInfo, rayLength) ||
+        Physics.Raycast(transform.position, impact)) 
+        && playerMovement.isFlying;
+
+        if(isValid)
         {
-            impactLength = Vector3.zero;
-            hitWall = true;
+            collidedWithWall = true;
         }
     }
 

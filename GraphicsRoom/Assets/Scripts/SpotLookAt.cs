@@ -4,13 +4,12 @@ using UnityEngine;
 
 public class SpotLookAt : MonoBehaviour
 {
-    public bool turnOn;
-    public int selection = 0;
-    public float turnRate = 1.0f, waitTime = 1.0f;
-    public Transform[] targets;
-    // Start is called before the first frame update
+    [Header("Spot light settings")]
+    [SerializeField] private bool turnOn;
+    [SerializeField] private int selection = 0;
+    [SerializeField] private float turnRate = 1.0f, waitTime = 1.0f;
+    [SerializeField] private Transform[] targets;
 
-    // Update is called once per frame
     void Start()
     {
         InvokeRepeating("Cycle", 0, waitTime);

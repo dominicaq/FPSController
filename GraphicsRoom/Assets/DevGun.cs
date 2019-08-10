@@ -4,27 +4,24 @@ using UnityEngine;
 
 public class DevGun : MonoBehaviour
 {
-    public float recoilAmount = 3f;
-    public GameObject projectile;
-    CameraShake recoil;
-
+    [SerializeField]private GameObject projectile;
+    private CameraShake recoil;
+    // Update is called once per frame
     void Start()
     {
-        recoil = transform.parent.GetComponent<CameraShake>();
+        recoil = transform.parent.parent.GetComponent<CameraShake>();
     }
-
-    // Update is called once per frame
     void Update()
     {
         // Shoot
         if(Input.GetMouseButtonDown(0))
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            recoil.InduceAimPunch(5);
+            recoil.InduceStress(10);
 
             if (Physics.Raycast(ray,out RaycastHit hit, 1000f))
                 Instantiate(projectile, hit.point, Quaternion.identity);
-
-            recoil.InduceAimPunch(recoilAmount);
         }
     }
 }

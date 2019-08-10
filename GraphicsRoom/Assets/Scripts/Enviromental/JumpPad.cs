@@ -2,9 +2,10 @@
 
 public class JumpPad : MonoBehaviour
 {
-    public float strength = 2;
+    [SerializeField] private float strength = 2;
     private CharacterController playerMovement;
     private PlayerForce forceModifier;
+    private PlayerController playerConditions;
 
     // Audio
     private AudioSource audioData;
@@ -19,6 +20,7 @@ public class JumpPad : MonoBehaviour
         if (other.tag == "Player")
         {
             playerMovement = other.GetComponent<CharacterController>();
+            playerConditions = other.GetComponent<PlayerController>();
             forceModifier = other.GetComponent<PlayerForce>();
 
             // Zero for new force
@@ -30,7 +32,9 @@ public class JumpPad : MonoBehaviour
                 // If jumpPad is rotated, launch player accordingly
             }
 
-            forceModifier.AddUpwardForce(strength);
+            forceModifier.AddForce(strength);
+            playerConditions.RestrictAirControl = true;
+
             audioData.Play(0);
         }
     }

@@ -5,22 +5,19 @@ using UnityEngine;
 public class PlayerCamera : MonoBehaviour
 {
     // Camera Settings
-    [Header("Spectator")]    
-    public bool enableSpectator = false;
-    public float spectatorMovement = 5.0f;
-
     [Header("General Settings")]
-    public bool lockCursor = true;
-    public float playerFOV = 90;
-    public float cameraHeight = 0.5f;
+    [SerializeField] private bool lockCursor = true;
+    [SerializeField] private float playerFOV = 90;
+    [SerializeField] private float cameraHeight = 0.5f;
     private Camera cam;
 
     [Header("Mouse Settings")]
-    public float mouseSensitivity = 2.0f;
+    [SerializeField] private float mouseSensitivity = 2.0f;
     private float pitch = 0.0f;
     private float yaw = 0.0f;
 
     // Crouching
+    [Header("Transition Camera")]
     public bool cameraCanTransition = false;
     private float tParam = 0.0f;
 
@@ -63,29 +60,21 @@ public class PlayerCamera : MonoBehaviour
             punchValue = -punchValue;
         }
 
-        pitch = Mathf.Clamp(pitch, -90 + punchValue, 90);
+        pitch = Mathf.Clamp(pitch, punchValue - 90, 90);
         transform.eulerAngles = new Vector3(pitch - punchValue, yaw, shakeValue);
 
-        if (enableSpectator)
-        {
-            transform.Translate(Input.GetAxis("Horizontal") * Time.deltaTime * spectatorMovement, 0, 0);
-            transform.Translate(0, 0, Input.GetAxis("Vertical") * Time.deltaTime * spectatorMovement);
-        }
-        else
-        {
-            // Cameraheight is a lerped float
-            Vector3 desiredHeight = transform.localPosition;
+        // Cameraheight is a lerped float
+        Vector3 desiredHeight = transform.localPosition;
     
-            desiredHeight.y = cameraHeight;
-            transform.localPosition = desiredHeight;
-        }
+        desiredHeight.y = cameraHeight;
+        transform.localPosition = desiredHeight;
 
         // Crouching
         if (cameraCanTransition)
-            AdjustCamera();
+            AdjustCrouch();
     }
 
-    private void AdjustCamera()
+    private void AdjustCrouch()
     {
         float stand = .2f;
         float crouch = .6f;

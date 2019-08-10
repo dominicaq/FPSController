@@ -4,9 +4,10 @@ using UnityEngine;
 
 public class ExplosionImpulse : MonoBehaviour
 {
-    public float strength = 25;
+    public float strength = 30;
     public float explosionRadius = 5;
-    private float linger = 0;
+    public float activeDuration = 0.1f;
+    private bool active = true;
     private Vector3 direction;
     private CharacterController playerMovement;
     private PlayerForce forceModifier;
@@ -24,21 +25,31 @@ public class ExplosionImpulse : MonoBehaviour
         audioData.Play(0);
 
         // Linger long enough for sound to finish playing
-        Destroy(gameObject, 0.1f);
+        StartCoroutine("DurationActive");
+        Destroy(gameObject, audioData.clip.length);
     }
 
     private void OnTriggerEnter(Collider hit)
     {
-        playerMovement = hit.GetComponent<CharacterController>();
-        forceModifier = hit.GetComponent<PlayerForce>();
+        if(active)
+        {
+            playerMovement = hit.GetComponent<CharacterController>();
+            forceModifier = hit.GetComponent<PlayerForce>();
+            
+            // Direction of explosion
+            direction = transform.position - hit.transform.position;
 
-        // Direction of explosion
-        direction = transform.position - hit.transform.position;
-        direction.y /= 2;
-        direction.Normalize();
+            // Finalize
+            if(forceModifier != null)
+                forceModifier.AddForce(direction * strength);
+        }
+    }
 
-        // Finalize
-        forceModifier.AddForce(direction * strength);
+    IEnumerator DurationActive()
+    {
+        active = true;
+        yield return new WaitForSeconds(activeDuration);
+        active = false;
     }
 
     void OnDrawGizmos()

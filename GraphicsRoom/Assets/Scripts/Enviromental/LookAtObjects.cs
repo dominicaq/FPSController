@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class LookAtObjects : MonoBehaviour
 {
-    public int selection = 0;
-    public float turnRate = 1.0f, waitTime = 1.0f;
-    public Transform[] targets;
+    [SerializeField] private int selection = 0;
+    [SerializeField] private float turnRate = 1.0f, waitTime = 1.0f;
+    [SerializeField] private Transform[] targets;
 
     void Start()
     {

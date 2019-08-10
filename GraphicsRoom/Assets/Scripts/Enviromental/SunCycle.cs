@@ -4,8 +4,8 @@ using UnityEngine;
 
 public class SunCycle : MonoBehaviour
 {
-    public bool turnOn;
-    public float turnRate = 2.0f;
+    [SerializeField] private bool turnOn;
+    [SerializeField] private float turnRate = 2.0f;
     private float rate = 0.0f;
     
     // Update is called once per frame

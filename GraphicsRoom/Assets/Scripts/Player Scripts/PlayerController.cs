@@ -1,19 +1,25 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
     [Header("Player Input")]
-    public float horizontal;
-    public float vertical;
+    private float horizontal;
+    private float vertical;
+    [SerializeField] private bool disableCrouchToggle = false;
+    public bool RestrictAirControl = false;
 
     [Header("Player Movement")]
-    public float movementSpeed = 7.0f;
-    public float crouchSpeed = 2.8f;
-    public float jumpHeight = 2f;
+    [SerializeField] private float movementSpeed = 7.0f;
+    [SerializeField] private float crouchSpeed = 2.8f;
     public float crouchRate = 10.0f;
     private float sParam = 0.0f;
+
+    [Header("Jumping")]
+    [SerializeField] private float jumpHeight = 2f;
+    [SerializeField] private bool enableMultiJump = true;
+    [SerializeField] private int maximumJumps = 2;
+    private int jumpCounter = 0;
+    private bool canJumpInAir = false;
 
     [Header("Base Stats")]
     private float baseMoveSpeed;
@@ -21,14 +27,16 @@ public class PlayerController : MonoBehaviour
     private float baseHeight;
 
     [Header("Gravity")]
-    public float gravity = 6f;
     public float velocity = 0.0f;
-    public float slopeRayLength = 1.5f;
+    [SerializeField] private float gravity = 6f;
+    [SerializeField] private float slopeRayLength = 1.5f;
     private PlayerForce forceModifier;
 
-    [Header("Conditions")]
+    [Header("Player Conditions")]
     public bool isCrouching = false;
     public bool isJumping = false;
+    public bool isFlying = false;
+    public bool isClimbingLadder = false;
 
     [Header("Character Controller")]
     private CharacterController playerCC;
@@ -39,7 +47,7 @@ public class PlayerController : MonoBehaviour
     private PlayerCamera cameraProperties;
     private CameraShake playerShake;
     
-    void Awake()
+    private void Awake()
     {
         // Player Camera
         playerCamera = transform.GetChild(0);
@@ -59,28 +67,44 @@ public class PlayerController : MonoBehaviour
     {            
         // Jumping
         if (Input.GetKeyDown(KeyCode.Space))
+        {
             Jump();
+        }
 
         // Crouching
-        if (Input.GetKeyDown(KeyCode.C) && !cameraProperties.cameraCanTransition)
-            Crouch();    
-    }
-
-    void Update()
-    {
-        if (!cameraProperties.enableSpectator)
+        if(disableCrouchToggle)
         {
-            PlayerMove();
-            PlayerInput();
-            EssentialStatements();
+            if(Input.GetKeyDown(KeyCode.C) && !cameraProperties.cameraCanTransition)
+            {
+                Crouch();
+            }
+
+            if(Input.GetKeyUp(KeyCode.C) && !cameraProperties.cameraCanTransition && isCrouching)
+            {
+                Crouch();
+            }
+        }
+        else
+        {
+            if (Input.GetKeyDown(KeyCode.C) && !cameraProperties.cameraCanTransition)
+            {
+                Crouch();
+            }
         }
     }
 
+    private void Update()
+    {
+        PlayerMove();
+        PlayerInput();
+        PlayerMisc();
+    }
+
     // For things that need constant updating
-    private void EssentialStatements()
+    private void PlayerMisc()
     {        
         // Prevent player from excessive floating
-        if (HeadCheck() && isJumping && !forceModifier.isFlying)
+        if (HeadCheck() && isJumping && !isFlying)
         {
             velocity = -0.5f;
         }
@@ -107,10 +131,26 @@ public class PlayerController : MonoBehaviour
         horizontal = Input.GetAxis("Horizontal");
         vertical = Input.GetAxis("Vertical");
 
+        // Air Control
+        if(!playerCC.isGrounded && RestrictAirControl)
+        {
+            horizontal = horizontal / 2;
+            vertical = vertical / 4;
+        }
+
         // Gravity
         velocity -= gravity * Time.deltaTime;
 
-        Vector3 playerInput = new Vector3 (horizontal,0,vertical);
+        // Ladder handling
+        Vector3 playerInput; 
+        if (isClimbingLadder)
+        {
+            playerInput = new Vector3(horizontal, vertical, 0);
+        }
+        else
+        {
+            playerInput = new Vector3 (horizontal,0,vertical);
+        }
 
         // Prevent Execessive diagonal movement
         if(playerInput.sqrMagnitude > 1)
@@ -120,7 +160,16 @@ public class PlayerController : MonoBehaviour
 
         // Finalization
         playerInput = transform.rotation * playerInput * movementSpeed;
-        playerInput.y = velocity * gravity;
+
+        if(!isClimbingLadder)
+        {
+            playerInput.y = velocity * gravity;
+        }
+        else
+        {
+            velocity = 0;
+        }
+        
 
         playerCC.Move(playerInput * Time.deltaTime);
         
@@ -132,6 +181,9 @@ public class PlayerController : MonoBehaviour
             }
 
             isJumping = false;
+            RestrictAirControl = false;
+            canJumpInAir = true;
+            jumpCounter = 0;
             velocity = 0;
         }
 
@@ -144,10 +196,25 @@ public class PlayerController : MonoBehaviour
 
     private void Jump()
     {
-        if (playerCC.isGrounded)
+        // Remove a jump if player is in air
+        if(!playerCC.isGrounded && !isJumping && canJumpInAir)
+        {   
+            jumpCounter += 1;
+            canJumpInAir = false;
+        }
+
+        if(isJumping)
         {
-            isJumping = true;
-            forceModifier.AddUpwardForce(jumpHeight);
+            RestrictAirControl = false;
+            
+            if(maximumJumps != jumpCounter)
+                jumpCounter += 1;
+        }
+
+        // AddForce() will make isJumping true
+        if (playerCC.isGrounded || (jumpCounter != maximumJumps && enableMultiJump))
+        {
+            forceModifier.AddForce(jumpHeight*2);
         }
     }
 
@@ -186,7 +253,7 @@ public class PlayerController : MonoBehaviour
     }
 
     // True if object is decteted above head, false if not
-    private bool HeadCheck()
+    public bool HeadCheck()
     {
         float rayLength = .6f;
 
@@ -209,7 +276,7 @@ public class PlayerController : MonoBehaviour
         return false;
     }
 
-    void OnDrawGizmos()
+    private void OnDrawGizmos()
     { 
         // Draw a yellow sphere at the transform's position
         Gizmos.color = Color.blue;
