@@ -1,12 +1,15 @@
 ﻿using UnityEngine;
 
+[RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
     [Header("Player Input")]
+    public bool RestrictAirControl = false;
     private float horizontal;
     private float vertical;
+    private Vector3 moveDirection;
+    private bool enableJumping = true;
     [SerializeField] private bool disableCrouchToggle = false;
-    public bool RestrictAirControl = false;
 
     [Header("Player Movement")]
     [SerializeField] private float movementSpeed = 7.0f;
@@ -15,7 +18,7 @@ public class PlayerController : MonoBehaviour
     private float sParam = 0.0f;
 
     [Header("Jumping")]
-    [SerializeField] private float jumpHeight = 2f;
+    [SerializeField] private float jumpHeight = 4f;
     [SerializeField] private bool enableMultiJump = true;
     [SerializeField] private int maximumJumps = 2;
     private int jumpCounter = 0;
@@ -47,6 +50,7 @@ public class PlayerController : MonoBehaviour
     private PlayerCamera cameraProperties;
     private CameraShake playerShake;
     
+    // Gets componenets and sets base stats
     private void Awake()
     {
         // Player Camera
@@ -57,45 +61,48 @@ public class PlayerController : MonoBehaviour
         // Character Controller and Player force modifier
         playerCC = GetComponent<CharacterController>();
         forceModifier = GetComponent<PlayerForce>();
-        baseHeight = playerCC.height;
-
-        // Base stats
+        
+        // Base Variables
         baseMoveSpeed = movementSpeed;
+        baseHeight = playerCC.height;
         baseJumpHeight = jumpHeight;
     }
     private void PlayerInput()
-    {            
+    {
+        // Player Input
+        horizontal = Input.GetAxis("Horizontal");
+        vertical = Input.GetAxis("Vertical");
+
         // Jumping
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.Space) && enableJumping)
         {
             Jump();
         }
 
         // Crouching
-        if(disableCrouchToggle)
+        if (Input.GetKeyDown(KeyCode.C))
         {
-            if(Input.GetKeyDown(KeyCode.C) && !cameraProperties.cameraCanTransition)
-            {
-                Crouch();
-            }
-
-            if(Input.GetKeyUp(KeyCode.C) && !cameraProperties.cameraCanTransition && isCrouching)
-            {
-                Crouch();
-            }
+            Crouch();
         }
-        else
+        else if (Input.GetKeyUp(KeyCode.C) && isCrouching && disableCrouchToggle)
         {
-            if (Input.GetKeyDown(KeyCode.C) && !cameraProperties.cameraCanTransition)
-            {
-                Crouch();
-            }
+            Crouch();
         }
     }
 
     private void Update()
     {
-        PlayerMove();
+        if(isClimbingLadder)
+        {
+            LadderMovement();
+        }
+        else
+        {
+            enableJumping = isCrouching ? false : true;
+            PlayerMove();
+        }
+
+        RotateBodyWithCamera();
         PlayerInput();
         PlayerMisc();
     }
@@ -103,13 +110,13 @@ public class PlayerController : MonoBehaviour
     // For things that need constant updating
     private void PlayerMisc()
     {        
-        // Prevent player from excessive floating
+        // Prevent player from excessive floating when jumping
         if (HeadCheck() && isJumping && !isFlying)
         {
             velocity = -0.5f;
         }
 
-        // Decelerate player when crouching
+        // Decelerate player movement when crouching
         if (isCrouching)
         {
             sParam += 2f * Time.deltaTime;
@@ -122,14 +129,8 @@ public class PlayerController : MonoBehaviour
     // Handles gravity, movement, and movement on terrain
     private void PlayerMove()
     {
-        // Body rotation with camera
-        Vector3 bodyRot = playerCamera.eulerAngles;
-        bodyRot.x = 0f;
-        transform.eulerAngles = bodyRot;
-
-        // Player Input
-        horizontal = Input.GetAxis("Horizontal");
-        vertical = Input.GetAxis("Vertical");
+        // Gravity
+        velocity -= gravity * Time.deltaTime;
 
         // Air Control
         if(!playerCC.isGrounded && RestrictAirControl)
@@ -138,41 +139,21 @@ public class PlayerController : MonoBehaviour
             vertical = vertical / 4;
         }
 
-        // Gravity
-        velocity -= gravity * Time.deltaTime;
-
-        // Ladder handling
-        Vector3 playerInput; 
-        if (isClimbingLadder)
-        {
-            playerInput = new Vector3(horizontal, vertical, 0);
-        }
-        else
-        {
-            playerInput = new Vector3 (horizontal,0,vertical);
-        }
+        moveDirection = new Vector3 (horizontal,0,vertical);
 
         // Prevent Execessive diagonal movement
-        if(playerInput.sqrMagnitude > 1)
+        if(moveDirection.sqrMagnitude > 1)
         {   
-            playerInput = playerInput.normalized;
+            moveDirection = moveDirection.normalized;
         }
 
         // Finalization
-        playerInput = transform.rotation * playerInput * movementSpeed;
-
-        if(!isClimbingLadder)
-        {
-            playerInput.y = velocity * gravity;
-        }
-        else
-        {
-            velocity = 0;
-        }
+        moveDirection = transform.rotation * moveDirection * movementSpeed;
+        moveDirection.y = velocity * gravity;
         
-
-        playerCC.Move(playerInput * Time.deltaTime);
+        playerCC.Move(moveDirection * Time.deltaTime);
         
+        // Grounding
         if(playerCC.isGrounded)
         {
             if(velocity < -7f)
@@ -180,8 +161,8 @@ public class PlayerController : MonoBehaviour
                 playerShake.InduceStress(Mathf.Abs(velocity));
             }
 
-            isJumping = false;
             RestrictAirControl = false;
+            isJumping = false;
             canJumpInAir = true;
             jumpCounter = 0;
             velocity = 0;
@@ -192,6 +173,22 @@ public class PlayerController : MonoBehaviour
         {
             playerCC.Move(Vector3.down * 5 * Time.deltaTime);
         }
+    }
+
+    private void LadderMovement()
+    {
+        velocity = 0;
+        enableJumping  = false;
+
+        moveDirection = new Vector3(horizontal, vertical, 0);
+
+        if(moveDirection.sqrMagnitude > 1)
+        {   
+            moveDirection = moveDirection.normalized;
+        }
+
+        moveDirection = transform.rotation * moveDirection * movementSpeed;
+        playerCC.Move(moveDirection * Time.deltaTime);
     }
 
     private void Jump()
@@ -207,6 +204,7 @@ public class PlayerController : MonoBehaviour
         {
             RestrictAirControl = false;
             
+            // Multi jump
             if(maximumJumps != jumpCounter)
                 jumpCounter += 1;
         }
@@ -214,10 +212,11 @@ public class PlayerController : MonoBehaviour
         // AddForce() will make isJumping true
         if (playerCC.isGrounded || (jumpCounter != maximumJumps && enableMultiJump))
         {
-            forceModifier.AddForce(jumpHeight*2);
+            forceModifier.AddForce(jumpHeight);
         }
     }
 
+    // TODO: REDO CROUCHING
     private void Crouch()
     {
         if (!isCrouching)
@@ -226,19 +225,14 @@ public class PlayerController : MonoBehaviour
 
             isCrouching = true;
             cameraProperties.cameraCanTransition = true;
-
-            jumpHeight = jumpHeight * .3f;
         }
         else if (!HeadCheck())
         {
             playerCC.height = baseHeight;
 
+            movementSpeed = baseMoveSpeed;
             isCrouching = false;
             cameraProperties.cameraCanTransition = true;
-
-            // Movement values
-            movementSpeed = baseMoveSpeed;
-            jumpHeight = baseJumpHeight;
         }
 
         // Adjust player position for resize
@@ -256,7 +250,6 @@ public class PlayerController : MonoBehaviour
     public bool HeadCheck()
     {
         float rayLength = .6f;
-
         return Physics.SphereCast(transform.position, playerCC.radius, Vector3.up, out RaycastHit hitInfo, rayLength);
     }
 
@@ -274,6 +267,14 @@ public class PlayerController : MonoBehaviour
         }
 
         return false;
+    }
+
+    // Body rotation with camera
+    private void RotateBodyWithCamera()
+    {
+        Vector3 bodyRot = playerCamera.eulerAngles;
+        bodyRot.x = 0f;
+        transform.eulerAngles = bodyRot;
     }
 
     private void OnDrawGizmos()

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(Camera))]
 public class PlayerCamera : MonoBehaviour
 {
     // Camera Settings
@@ -69,6 +70,7 @@ public class PlayerCamera : MonoBehaviour
         desiredHeight.y = cameraHeight;
         transform.localPosition = desiredHeight;
 
+        // TODO: REDO CROUCHING
         // Crouching
         if (cameraCanTransition)
             AdjustCrouch();

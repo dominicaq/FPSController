@@ -41,7 +41,7 @@ public class PlayerForce : MonoBehaviour
         // Additional strength if player is jumping
         if(playerMovement.isCrouching && playerMovement.isJumping)
         {
-            dir.y = dir.y * 1.25f;
+            dir.y = dir.y * 2.5f;
         }
 
         playerMovement.velocity = 0;
@@ -79,7 +79,7 @@ public class PlayerForce : MonoBehaviour
                 impact = Vector3.Lerp(impact, Vector3.zero, Time.deltaTime * 30f);
             }
         }
-            
+
         // Finalization
         if(impact.magnitude > 1 || impact.magnitude < -1)
         {

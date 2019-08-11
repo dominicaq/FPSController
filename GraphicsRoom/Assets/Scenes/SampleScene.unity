@@ -6444,6 +6444,16 @@ PrefabInstance:
       propertyPath: disableCrouchToggle
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1768554361563764937, guid: bcd114faaad8e534280a8bdfc6be5c5e,
+        type: 3}
+      propertyPath: crouchRate
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1768554361563764937, guid: bcd114faaad8e534280a8bdfc6be5c5e,
+        type: 3}
+      propertyPath: jumpHeight
+      value: 4
+      objectReference: {fileID: 0}
     - target: {fileID: 4730940237327166006, guid: bcd114faaad8e534280a8bdfc6be5c5e,
         type: 3}
       propertyPath: m_RootOrder
