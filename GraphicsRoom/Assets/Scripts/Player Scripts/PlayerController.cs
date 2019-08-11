@@ -279,7 +279,7 @@ public class PlayerController : MonoBehaviour
             {
                 if (!HeadCheck())
                 {
-                    playerCC.Move(Vector3.up * .8f);
+                    playerCC.Move(Vector3.up * .1f);
                 }
                 playerCC.Move(Vector3.down * 10);
             }
@@ -307,8 +307,8 @@ public class PlayerController : MonoBehaviour
     // True if object is decteted above head, false if not
     public bool HeadCheck()
     {
-        float rayLength = isCrouching ? initPlayerHeight : .6f;
-        return Physics.SphereCast(transform.position, playerCC.radius, Vector3.up, out RaycastHit hitInfo, initPlayerHeight);
+        float rayLength = isCrouching ? initPlayerHeight - .5f : .6f;
+        return Physics.SphereCast(transform.position, playerCC.radius, Vector3.up, out RaycastHit hitInfo, rayLength);
     }
 
     // Check if player is on a slope
