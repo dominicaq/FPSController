@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
@@ -13,9 +14,17 @@ public class PlayerController : MonoBehaviour
 
     [Header("Player Movement")]
     [SerializeField] private float movementSpeed = 7.0f;
-    [SerializeField] private float crouchSpeed = 2.8f;
-    public float crouchRate = 10.0f;
-    private float sParam = 0.0f;
+    [SerializeField] private float crouchMovementSpeed = 2.8f;
+
+    [Header("Crouching")]
+    [SerializeField] private float crouchHeight = 1.2f;
+    [SerializeField] private Vector3 crouchCenter;
+    [SerializeField] private float crouchDecelerateSpeed = 2.0f;
+    [SerializeField] private float crouchTransitionDuration = 1f;
+    [SerializeField] private AnimationCurve crouchTransitionCurve = AnimationCurve.EaseInOut(0f,0f,1f,1f);
+    private bool duringCrouchAnimation;
+    private float crouchCamHeight;
+    private float initCamHeight;
 
     [Header("Jumping")]
     [SerializeField] private float jumpHeight = 4f;
@@ -24,10 +33,11 @@ public class PlayerController : MonoBehaviour
     private int jumpCounter = 0;
     private bool canJumpInAir = false;
 
-    [Header("Base Stats")]
-    private float baseMoveSpeed;
-    private float baseJumpHeight;
-    private float baseHeight;
+    [Header("Init Variables")]
+    private Vector3 initCenter;
+    private float initMoveSpeed;
+    private float initJumpHeight;
+    private float initPlayerHeight;
 
     [Header("Gravity")]
     public float velocity = 0.0f;
@@ -51,7 +61,7 @@ public class PlayerController : MonoBehaviour
     private CameraShake playerShake;
     
     // Gets componenets and sets base stats
-    private void Awake()
+    private void Start()
     {
         // Player Camera
         playerCamera = transform.GetChild(0);
@@ -62,10 +72,16 @@ public class PlayerController : MonoBehaviour
         playerCC = GetComponent<CharacterController>();
         forceModifier = GetComponent<PlayerForce>();
         
-        // Base Variables
-        baseMoveSpeed = movementSpeed;
-        baseHeight = playerCC.height;
-        baseJumpHeight = jumpHeight;
+        // Init Variables
+        initPlayerHeight = playerCC.height;
+        initCenter = playerCC.center;
+
+        initCamHeight = playerCamera.localPosition.y;
+        crouchCenter = (crouchHeight / 2f + playerCC.skinWidth) * Vector3.up;
+        crouchCamHeight = initPlayerHeight - crouchHeight;
+
+        initMoveSpeed = movementSpeed;
+        initJumpHeight = jumpHeight;
     }
     private void PlayerInput()
     {
@@ -80,11 +96,11 @@ public class PlayerController : MonoBehaviour
         }
 
         // Crouching
-        if (Input.GetKeyDown(KeyCode.C))
+        if (Input.GetKeyDown(KeyCode.C) && !duringCrouchAnimation)
         {
             Crouch();
         }
-        else if (Input.GetKeyUp(KeyCode.C) && isCrouching && disableCrouchToggle)
+        else if (!Input.GetKey(KeyCode.C) && isCrouching && !duringCrouchAnimation && disableCrouchToggle)
         {
             Crouch();
         }
@@ -116,14 +132,11 @@ public class PlayerController : MonoBehaviour
             velocity = -0.5f;
         }
 
-        // Decelerate player movement when crouching
-        if (isCrouching)
+        // Ensure movespeed is always initspeed when not crouching
+        if(!isCrouching)
         {
-            sParam += 2f * Time.deltaTime;
-            movementSpeed = Mathf.Lerp(baseMoveSpeed, crouchSpeed, sParam);
+            movementSpeed = initMoveSpeed;
         }
-        else
-            sParam = 0;
     }
     
     // Handles gravity, movement, and movement on terrain
@@ -216,41 +229,86 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    // TODO: REDO CROUCHING
     private void Crouch()
     {
-        if (!isCrouching)
+        if(!isCrouching)
         {
-            playerCC.height = baseHeight * .6f;
-
+            StartCoroutine("CrouchRoutine");
+            StartCoroutine("CrouchDecelerateRoutine");
             isCrouching = true;
-            cameraProperties.cameraCanTransition = true;
         }
         else if (!HeadCheck())
         {
-            playerCC.height = baseHeight;
-
-            movementSpeed = baseMoveSpeed;
+            StartCoroutine("CrouchRoutine");
+            movementSpeed = initMoveSpeed;
             isCrouching = false;
-            cameraProperties.cameraCanTransition = true;
+        }
+    }
+
+    private IEnumerator CrouchRoutine()
+    {
+        duringCrouchAnimation = true;
+
+        float crouchParam = 0f;
+        float smoothCrouchParam = 0f;
+
+        float crouchSpeed = 1f / crouchTransitionDuration;
+        float currentHeight = playerCC.height;
+        Vector3 currentCenter = playerCC.center;
+        
+        float desiredHeight = isCrouching ? initPlayerHeight : crouchHeight;
+        Vector3 desiredCenter = isCrouching ? initCenter : crouchCenter;
+
+        Vector3 camPos = playerCamera.localPosition;
+        float camCurrentHeight = camPos.y;
+        float camDesiredHeight = isCrouching ? initCamHeight : crouchCamHeight;
+
+        while(crouchParam < 1f)
+        {
+            crouchParam += Time.deltaTime * crouchSpeed;
+            smoothCrouchParam = crouchTransitionCurve.Evaluate(crouchParam);
+
+            playerCC.height = Mathf.Lerp(currentHeight, desiredHeight, smoothCrouchParam);
+            playerCC.center = Vector3.Lerp(currentCenter, desiredCenter, smoothCrouchParam);
+
+            camPos.y = Mathf.Lerp(camCurrentHeight,camDesiredHeight, smoothCrouchParam);
+            playerCamera.localPosition = camPos;
+
+            // Adjust player position for resize
+            if (playerCC.isGrounded)
+            {
+                if (!HeadCheck())
+                {
+                    playerCC.Move(Vector3.up * .8f);
+                }
+                playerCC.Move(Vector3.down * 10);
+            }
+
+            yield return null;
         }
 
-        // Adjust player position for resize
-        if (playerCC.isGrounded)
+        duringCrouchAnimation = false;
+    }
+
+    private IEnumerator CrouchDecelerateRoutine()
+    {
+        // Decelerate player movement when crouching
+        float elapsedTime = 0.0f;
+
+        while(elapsedTime < 1f)
         {
-            if (!HeadCheck())
-            {
-                playerCC.Move(Vector3.up * .8f);
-            }
-            playerCC.Move(Vector3.down * 10);
+            elapsedTime += crouchDecelerateSpeed * Time.deltaTime;
+            movementSpeed = Mathf.Lerp(initMoveSpeed, crouchMovementSpeed, elapsedTime);
+
+            yield return null;
         }
     }
 
     // True if object is decteted above head, false if not
     public bool HeadCheck()
     {
-        float rayLength = .6f;
-        return Physics.SphereCast(transform.position, playerCC.radius, Vector3.up, out RaycastHit hitInfo, rayLength);
+        float rayLength = isCrouching ? initPlayerHeight : .6f;
+        return Physics.SphereCast(transform.position, playerCC.radius, Vector3.up, out RaycastHit hitInfo, initPlayerHeight);
     }
 
     // Check if player is on a slope
@@ -281,6 +339,7 @@ public class PlayerController : MonoBehaviour
     { 
         // Draw a yellow sphere at the transform's position
         Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(transform.position + Vector3.up * .6f, .5f);
+        float rayLength = isCrouching ? initPlayerHeight : .6f;
+        Gizmos.DrawWireSphere(transform.position + Vector3.up * rayLength, .5f);
     }
 }

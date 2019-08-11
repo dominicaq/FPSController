@@ -69,38 +69,5 @@ public class PlayerCamera : MonoBehaviour
     
         desiredHeight.y = cameraHeight;
         transform.localPosition = desiredHeight;
-
-        // TODO: REDO CROUCHING
-        // Crouching
-        if (cameraCanTransition)
-            AdjustCrouch();
-    }
-
-    private void AdjustCrouch()
-    {
-        float stand = .2f;
-        float crouch = .6f;
-        
-        tParam += playerCC.crouchRate * Time.fixedDeltaTime;
-        if (playerCC.isCrouching)
-        {
-            cameraHeight = Mathf.Lerp(crouch, stand, tParam);
-            
-            if (cameraHeight == stand)
-            {
-                cameraCanTransition = false;
-                tParam = 0;
-            }
-        }
-        else
-        {
-            cameraHeight = Mathf.Lerp(stand, crouch, tParam);
-
-            if (cameraHeight == crouch)
-            {
-                cameraCanTransition = false;
-                tParam = 0;
-            }
-        }
     }
 }
