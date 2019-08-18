@@ -67,9 +67,10 @@ public class PlayerForce : MonoBehaviour
                 impact.y = 0;
 
                 // Decelerate faster if player input detected
-                if ((Input.GetAxis("Horizontal") != 0 || Input.GetAxis("Vertical") != 0))
+                if ((Input.GetAxis("Horizontal") != 0 || Input.GetAxis("Vertical") != 0) && !playerCC.isGrounded)
                 {
-                    impact = Vector3.Lerp(impact, Vector3.zero, Time.deltaTime * 10f );
+                    impact.x = Mathf.Lerp(impact.x, 0, Time.deltaTime * 15f );
+                    impact.z = Mathf.Lerp(impact.z, 0, Time.deltaTime * 15f );
                 }
             }
 

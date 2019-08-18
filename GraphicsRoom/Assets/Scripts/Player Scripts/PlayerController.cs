@@ -10,7 +10,7 @@ public class PlayerController : MonoBehaviour
     private float vertical;
     private Vector3 moveDirection;
     private bool enableJumping = true;
-    [SerializeField] private bool disableCrouchToggle = false;
+    [SerializeField] private bool enableCrouchToggle = false;
 
     [Header("Player Movement")]
     [SerializeField] private float movementSpeed = 7.0f;
@@ -18,11 +18,12 @@ public class PlayerController : MonoBehaviour
 
     [Header("Crouching")]
     [SerializeField] private float crouchHeight = 1.2f;
-    [SerializeField] private Vector3 crouchCenter;
+    [SerializeField] private Vector3 crouchCenter = new Vector3(0, 0.25f, 0);
     [SerializeField] private float crouchDecelerateSpeed = 2.0f;
     [SerializeField] private float crouchTransitionDuration = 1f;
     [SerializeField] private AnimationCurve crouchTransitionCurve = AnimationCurve.EaseInOut(0f,0f,1f,1f);
     private bool duringCrouchAnimation;
+    private bool crouchOnLanding;
     private float crouchCamHeight;
     private float initCamHeight;
 
@@ -43,6 +44,8 @@ public class PlayerController : MonoBehaviour
     public float velocity = 0.0f;
     [SerializeField] private float gravity = 6f;
     [SerializeField] private float slopeRayLength = 1.5f;
+    [SerializeField] private float maximumSlidingVelocity = -6f;
+    [SerializeField] private bool enableIsGrounded = true;
     private PlayerForce forceModifier;
 
     [Header("Player Conditions")]
@@ -57,8 +60,8 @@ public class PlayerController : MonoBehaviour
 
     [Header("Character Camera")]
     private Transform playerCamera;
-    private PlayerCamera cameraProperties;
     private CameraShake playerShake;
+    private PlayerCamera cameraProperties;
     
     // Gets componenets and sets base stats
     private void Start()
@@ -76,10 +79,8 @@ public class PlayerController : MonoBehaviour
         initPlayerHeight = playerCC.height;
         initCenter = playerCC.center;
 
-        initCamHeight = playerCamera.localPosition.y;
-        crouchCenter = (crouchHeight / 2f + playerCC.skinWidth) * Vector3.up;
         crouchCamHeight = initPlayerHeight - crouchHeight;
-
+        initCamHeight = playerCamera.localPosition.y;
         initMoveSpeed = movementSpeed;
         initJumpHeight = jumpHeight;
     }
@@ -96,13 +97,20 @@ public class PlayerController : MonoBehaviour
         }
 
         // Crouching
-        if (Input.GetKeyDown(KeyCode.C) && !duringCrouchAnimation)
+        if (Input.GetButtonDown("Crouch") && !duringCrouchAnimation)
         {
             Crouch();
+            crouchOnLanding = !playerCC.isGrounded ? true : false;
         }
-        else if (!Input.GetKey(KeyCode.C) && isCrouching && !duringCrouchAnimation && disableCrouchToggle)
+        else if (!Input.GetKey(KeyCode.C) && isCrouching && !duringCrouchAnimation && !enableCrouchToggle)
         {
             Crouch();
+            crouchOnLanding = !playerCC.isGrounded ? true : false;
+        }
+
+        if(Input.GetButtonUp("Crouch"))
+        {
+            crouchOnLanding = false;
         }
     }
 
@@ -119,6 +127,7 @@ public class PlayerController : MonoBehaviour
         }
 
         RotateBodyWithCamera();
+        SlideOffSlope();
         PlayerInput();
         PlayerMisc();
     }
@@ -127,12 +136,19 @@ public class PlayerController : MonoBehaviour
     private void PlayerMisc()
     {        
         // Prevent player from excessive floating when jumping
-        if (HeadCheck() && isJumping && !isFlying)
+        if (HeadCheck() && isJumping && !isFlying && !isCrouching)
         {
             velocity = -0.5f;
         }
 
-        // Ensure movespeed is always initspeed when not crouching
+        // Perform crouch upon landing
+        if(playerCC.isGrounded && crouchOnLanding)
+        {
+            Crouch();
+            crouchOnLanding = false;
+        }
+
+        // Ensure movespeed is always initSpeed when not crouching
         if(!isCrouching)
         {
             movementSpeed = initMoveSpeed;
@@ -143,7 +159,7 @@ public class PlayerController : MonoBehaviour
     private void PlayerMove()
     {
         // Gravity
-        velocity -= gravity * Time.deltaTime;
+        velocity -= Time.deltaTime * gravity;
 
         // Air Control
         if(!playerCC.isGrounded && RestrictAirControl)
@@ -167,7 +183,7 @@ public class PlayerController : MonoBehaviour
         playerCC.Move(moveDirection * Time.deltaTime);
         
         // Grounding
-        if(playerCC.isGrounded)
+        if(playerCC.isGrounded && enableIsGrounded)
         {
             if(velocity < -7f)
             {
@@ -186,22 +202,6 @@ public class PlayerController : MonoBehaviour
         {
             playerCC.Move(Vector3.down * 5 * Time.deltaTime);
         }
-    }
-
-    private void LadderMovement()
-    {
-        velocity = 0;
-        enableJumping  = false;
-
-        moveDirection = new Vector3(horizontal, vertical, 0);
-
-        if(moveDirection.sqrMagnitude > 1)
-        {   
-            moveDirection = moveDirection.normalized;
-        }
-
-        moveDirection = transform.rotation * moveDirection * movementSpeed;
-        playerCC.Move(moveDirection * Time.deltaTime);
     }
 
     private void Jump()
@@ -231,18 +231,22 @@ public class PlayerController : MonoBehaviour
 
     private void Crouch()
     {
-        if(!isCrouching)
+        if(playerCC.isGrounded)
         {
-            StartCoroutine("CrouchRoutine");
-            StartCoroutine("CrouchDecelerateRoutine");
-            isCrouching = true;
+            if(!isCrouching)
+            {
+                StartCoroutine("CrouchRoutine");
+                StartCoroutine("CrouchDecelerateRoutine");
+                isCrouching = true;
+            }
+            else if (!HeadCheck())
+            {
+                StartCoroutine("CrouchRoutine");
+                movementSpeed = initMoveSpeed;
+                isCrouching = false;
+            }
         }
-        else if (!HeadCheck())
-        {
-            StartCoroutine("CrouchRoutine");
-            movementSpeed = initMoveSpeed;
-            isCrouching = false;
-        }
+
     }
 
     private IEnumerator CrouchRoutine()
@@ -297,17 +301,36 @@ public class PlayerController : MonoBehaviour
 
         while(elapsedTime < 1f)
         {
-            elapsedTime += crouchDecelerateSpeed * Time.deltaTime;
-            movementSpeed = Mathf.Lerp(initMoveSpeed, crouchMovementSpeed, elapsedTime);
+            if(!isFlying && !isJumping)
+            {
+                elapsedTime += crouchDecelerateSpeed * Time.deltaTime;
+                movementSpeed = Mathf.Lerp(initMoveSpeed, crouchMovementSpeed, elapsedTime);
+            }
 
             yield return null;
         }
     }
 
+    private void LadderMovement()
+    {
+        velocity = 0;
+        enableJumping  = false;
+
+        moveDirection = Vector3.up * vertical;
+
+        if(moveDirection.sqrMagnitude > 1)
+        {   
+            moveDirection = moveDirection.normalized;
+        }
+
+        moveDirection = transform.rotation * moveDirection * movementSpeed;
+        playerCC.Move(moveDirection * Time.deltaTime);
+    }
+    
     // True if object is decteted above head, false if not
     public bool HeadCheck()
     {
-        float rayLength = isCrouching ? initPlayerHeight - .5f : .6f;
+        float rayLength = isCrouching ? crouchCenter.y + 0.75f : .6f;
         return Physics.SphereCast(transform.position, playerCC.radius, Vector3.up, out RaycastHit hitInfo, rayLength);
     }
 
@@ -327,6 +350,45 @@ public class PlayerController : MonoBehaviour
         return false;
     }
 
+    private void SlideOffSlope()
+    {
+        RaycastHit hit;
+        Vector3 slopeDirection = Vector3.zero;
+
+        if (Physics.SphereCast(transform.position, playerCC.radius, Vector3.down, out hit, 1) && !isCrouching)
+        {
+            Vector3 incomingVec = hit.point - transform.position;
+            slopeDirection =  Vector3.Reflect(incomingVec, hit.normal);
+        }
+        else if (Physics.Raycast(transform.position, Vector3.down, out hit, 1))
+        {
+            Vector3 incomingVec = hit.point - transform.position;
+            slopeDirection =  Vector3.Reflect(incomingVec, hit.normal);
+        }
+        
+        Debug.Log(slopeDirection);
+        if(playerCC.isGrounded)
+        {
+            if(slopeDirection.y < 0)
+            {
+                if(velocity < maximumSlidingVelocity)
+                    velocity = maximumSlidingVelocity;
+
+                playerCC.Move(Vector3.down + slopeDirection * Time.deltaTime * Mathf.Abs(velocity));
+
+                enableIsGrounded = false;
+                enableJumping = false;
+            }
+            else
+            {
+                enableIsGrounded = true;
+
+                if(!isCrouching)
+                    enableJumping = true;
+            }
+        }
+    }
+
     // Body rotation with camera
     private void RotateBodyWithCamera()
     {
@@ -339,7 +401,7 @@ public class PlayerController : MonoBehaviour
     { 
         // Draw a yellow sphere at the transform's position
         Gizmos.color = Color.blue;
-        float rayLength = isCrouching ? initPlayerHeight : .6f;
+        float rayLength = isCrouching ? crouchCenter.y + 0.75f : .6f;
         Gizmos.DrawWireSphere(transform.position + Vector3.up * rayLength, .5f);
     }
 }

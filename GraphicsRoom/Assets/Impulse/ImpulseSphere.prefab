@@ -163,6 +163,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e11a361364ee4c349be4ae646f3be2cc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  strength: 10
+  strength: 20
   explosionRadius: 2
   activeDuration: 0.1
