@@ -11,6 +11,7 @@ public class PlayerController : MonoBehaviour
     private Vector3 moveDirection;
     private bool enableJumping = true;
     [SerializeField] private bool enableCrouchToggle = false;
+    private bool enableCrouching = false;
 
     [Header("Player Movement")]
     [SerializeField] private float movementSpeed = 7.0f;
@@ -44,9 +45,13 @@ public class PlayerController : MonoBehaviour
     public float velocity = 0.0f;
     [SerializeField] private float gravity = 6f;
     [SerializeField] private float slopeRayLength = 1.5f;
-    [SerializeField] private float maximumSlidingVelocity = -6f;
     [SerializeField] private bool enableIsGrounded = true;
     private PlayerForce forceModifier;
+
+    [Header("Slope Sliding")]
+    [SerializeField] private float maximumSlidingVelocity = -6f;
+    private Vector3 incomingVec;
+    private Vector3 slopeDirection;
 
     [Header("Player Conditions")]
     public bool isCrouching = false;
@@ -62,7 +67,8 @@ public class PlayerController : MonoBehaviour
     private Transform playerCamera;
     private CameraShake playerShake;
     private PlayerCamera cameraProperties;
-    
+
+
     // Gets componenets and sets base stats
     private void Start()
     {
@@ -231,7 +237,7 @@ public class PlayerController : MonoBehaviour
 
     private void Crouch()
     {
-        if(playerCC.isGrounded)
+        if(playerCC.isGrounded && enableCrouching)
         {
             if(!isCrouching)
             {
@@ -246,7 +252,6 @@ public class PlayerController : MonoBehaviour
                 isCrouching = false;
             }
         }
-
     }
 
     private IEnumerator CrouchRoutine()
@@ -353,35 +358,40 @@ public class PlayerController : MonoBehaviour
     private void SlideOffSlope()
     {
         RaycastHit hit;
-        Vector3 slopeDirection = Vector3.zero;
 
         if (Physics.SphereCast(transform.position, playerCC.radius, Vector3.down, out hit, 1) && !isCrouching)
         {
-            Vector3 incomingVec = hit.point - transform.position;
+            // Standing ray
+            incomingVec = hit.point - transform.position;
             slopeDirection =  Vector3.Reflect(incomingVec, hit.normal);
         }
         else if (Physics.Raycast(transform.position, Vector3.down, out hit, 1))
         {
-            Vector3 incomingVec = hit.point - transform.position;
+            // Crouch ray
+            incomingVec = hit.point - transform.position;
             slopeDirection =  Vector3.Reflect(incomingVec, hit.normal);
         }
-        
-        Debug.Log(slopeDirection);
+
         if(playerCC.isGrounded)
         {
-            if(slopeDirection.y < 0)
+            if(slopeDirection.y <= 0.1f && !isFlying)
             {
                 if(velocity < maximumSlidingVelocity)
                     velocity = maximumSlidingVelocity;
 
-                playerCC.Move(Vector3.down + slopeDirection * Time.deltaTime * Mathf.Abs(velocity));
-
+                Vector3 slideVector = Vector3.down + slopeDirection * Time.deltaTime * Mathf.Abs(velocity);
+                playerCC.Move(slideVector);
+                
+                RestrictAirControl = true;
                 enableIsGrounded = false;
+                enableCrouching = false;
                 enableJumping = false;
             }
             else
             {
+                RestrictAirControl = false;
                 enableIsGrounded = true;
+                enableCrouching = true;
 
                 if(!isCrouching)
                     enableJumping = true;
