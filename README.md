@@ -1,7 +1,8 @@
 # FPSController
 The goal of this controller was to mimic how Valves character controller feels in their games, the reference I used was Team Fortress 2.
 
-Features:
+Bellow are the listed notable features:
+
 ## PlayerController:
 - Smooth crouching
 - Can walk up and down hills smoothly
@@ -13,3 +14,8 @@ Features:
 ## Player Camera
 - Aim punch
 - Camera wobble
+
+### Future Goals
+- Network when Unity releases thei new network API
+- Finish LadderMovement
+- Add Swimming
