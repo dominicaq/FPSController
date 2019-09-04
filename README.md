@@ -16,6 +16,6 @@ Bellow are the listed notable features:
 - Camera wobble
 
 ### Future Goals
-- Network when Unity releases thei new network API
+- Network when Unity releases their new network API
 - Finish LadderMovement
 - Add Swimming
