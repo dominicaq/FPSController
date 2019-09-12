@@ -16,6 +16,7 @@ public class PlayerController : MonoBehaviour
     [Header("Player Movement")]
     [SerializeField] private float movementSpeed = 7.0f;
     [SerializeField] private float crouchMovementSpeed = 2.8f;
+    [SerializeField] private float ladderAngle = 15.0f;
 
     [Header("Crouching")]
     [SerializeField] private float crouchHeight = 1.2f;
@@ -125,7 +126,7 @@ public class PlayerController : MonoBehaviour
         else
         {
             enableJumping = isCrouching ? false : true;
-            PlayerMove();
+            PlayerMove();          
         }
 
         RotateBodyWithCamera();
@@ -313,9 +314,21 @@ public class PlayerController : MonoBehaviour
         velocity = 0;
         enableJumping  = false;
 
-        Vector3 ladderVec = Vector3.up * vertical;
+        Vector3 ladderVec = Vector3.zero;
+        if(cameraProperties.isLookingUp(ladderAngle))
+        {
+            ladderVec = Vector3.up * vertical;
+        }
+        else if (cameraProperties.isLookingDown(ladderAngle))
+        {
+            ladderVec = Vector3.down * vertical;
+        }
 
-        playerCC.Move(ladderVec * movementSpeed * Time.deltaTime);
+        float moveRate = movementSpeed * (cameraProperties.getPitch() * 0.01f);
+        ladderVec = ladderVec * moveRate;
+        ladderVec.z = horizontal;
+        
+        playerCC.Move(ladderVec * Time.deltaTime);
     }
     
     // True if object is decteted above head, false if not
@@ -388,6 +401,15 @@ public class PlayerController : MonoBehaviour
         transform.eulerAngles = bodyRot;
     }
 
+    private void OnTriggerStay(Collider other)
+    {
+        isClimbingLadder = other.transform.tag == "Ladder";
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        isClimbingLadder = false;
+    }
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.blue;

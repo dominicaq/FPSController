@@ -17,17 +17,12 @@ public class PlayerCamera : MonoBehaviour
     private float pitch = 0.0f;
     private float yaw = 0.0f;
 
-    // Crouching
-    [Header("Transition Camera")]
-    public bool cameraCanTransition = false;
-    private float tParam = 0.0f;
-
     // Character Controller
     private Transform player;
     private PlayerController playerCC;
     private CameraShake camShake;
 
-    void Start()
+    private void Start()
     {
         // Camera properties
         cam = transform.GetComponent<Camera>();
@@ -44,7 +39,7 @@ public class PlayerCamera : MonoBehaviour
         }
     }
 
-    void Update()
+    private void Update()
     {
         // Shake effects
         float shakeValue = camShake.zShake;
@@ -56,7 +51,7 @@ public class PlayerCamera : MonoBehaviour
         pitch -= mouseSensitivity * Input.GetAxis("Mouse Y");
 
         // If player is looking up, reverse punch value
-        if (pitch <= -90)
+        if (isLookingUp(90))
         {
             punchValue = -punchValue;
         }
@@ -69,5 +64,20 @@ public class PlayerCamera : MonoBehaviour
     
         desiredHeight.y = cameraHeight;
         transform.localPosition = desiredHeight;
+    }
+
+    public float getPitch()
+    {
+        return Mathf.Abs(pitch);
+    }
+
+    public bool isLookingUp(float angle)
+    {
+        return pitch <= -angle ? true : false;
+    }
+
+    public bool isLookingDown(float angle)
+    {
+        return pitch >= angle ? true : false;
     }
 }
