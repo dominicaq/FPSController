@@ -16,7 +16,7 @@ public class PlayerController : MonoBehaviour
     [Header("Player Movement")]
     [SerializeField] private float movementSpeed = 7.0f;
     [SerializeField] private float crouchMovementSpeed = 2.8f;
-    [SerializeField] private float ladderAngle = 15.0f;
+    [SerializeField] private float ladderAngle = 5.0f;
 
     [Header("Crouching")]
     [SerializeField] private float crouchHeight = 1.2f;
@@ -44,7 +44,6 @@ public class PlayerController : MonoBehaviour
 
     [Header("Gravity")]
     public float velocity = 0.0f;
-    [SerializeField] private float gravity = 6f;
     [SerializeField] private float slopeRayLength = 1.5f;
     private PlayerForce forceModifier;
 
@@ -66,7 +65,7 @@ public class PlayerController : MonoBehaviour
     [Header("Character Camera")]
     private Transform playerCamera;
     private CameraShake playerShake;
-    private PlayerCamera cameraProperties;
+    private PlayerCamera playerCameraScript;
 
 
     // Gets componenets and sets base stats
@@ -74,7 +73,7 @@ public class PlayerController : MonoBehaviour
     {
         // Player Camera
         playerCamera = transform.GetChild(0);
-        cameraProperties = playerCamera.GetComponent<PlayerCamera>();
+        playerCameraScript = playerCamera.GetComponent<PlayerCamera>();
         playerShake = playerCamera.GetComponent<CameraShake>();
 
         // Character Controller and Player force modifier
@@ -119,6 +118,12 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
+        PlayerInput();
+        PlayerMisc();
+    }
+
+    private void LateUpdate() 
+    {
         if(isClimbingLadder)
         {
             LadderMovement();
@@ -126,20 +131,18 @@ public class PlayerController : MonoBehaviour
         else
         {
             enableJumping = isCrouching ? false : true;
-            PlayerMove();          
+            PlayerMove();
         }
 
         RotateBodyWithCamera();
         SlideOffSteepSlope();
-        PlayerInput();
-        PlayerMisc();
     }
 
     // For things that need constant updating
     private void PlayerMisc()
     {        
         // Prevent player from excessive floating when jumping
-        if (HeadCheck() && isJumping && !isFlying && !isCrouching)
+        if (HeadCheck() && isJumping && !isFlying)
         {
             velocity = -0.5f;
         }
@@ -162,7 +165,7 @@ public class PlayerController : MonoBehaviour
     private void PlayerMove()
     {
         // Gravity
-        velocity -= Time.deltaTime * gravity;
+        velocity += Time.deltaTime * Physics.gravity.y;
 
         if(!playerCC.isGrounded && RestrictAirControl)
         {
@@ -180,7 +183,7 @@ public class PlayerController : MonoBehaviour
 
         // Finalization
         moveDirection = transform.rotation * moveDirection * movementSpeed;
-        moveDirection.y = velocity * gravity;
+        moveDirection.y = velocity;
         playerCC.Move(moveDirection * Time.deltaTime);
         
         if(playerCC.isGrounded)
@@ -190,10 +193,10 @@ public class PlayerController : MonoBehaviour
                 playerShake.InduceStress(Mathf.Abs(velocity));
             }
 
-            RestrictAirControl = false;
-            isJumping = false;
             canJumpInAir = true;
+            isJumping = false;
             jumpCounter = 0;
+            
             velocity = 0;
         }
 
@@ -213,9 +216,7 @@ public class PlayerController : MonoBehaviour
         }
 
         if(isJumping)
-        {
-            RestrictAirControl = false;
-            
+        {   
             // Multi jump
             if(maximumJumps != jumpCounter)
                 jumpCounter += 1;
@@ -314,21 +315,24 @@ public class PlayerController : MonoBehaviour
         velocity = 0;
         enableJumping  = false;
 
-        Vector3 ladderVec = Vector3.zero;
-        if(cameraProperties.isLookingUp(ladderAngle))
+        Vector3 ladderVec = new Vector3 (horizontal,vertical,0);
+        if(ladderVec.sqrMagnitude > 1)
+            moveDirection = moveDirection.normalized;
+        
+        // Move controller based on camera rotation
+        if(playerCameraScript.isLookingUp(ladderAngle))
         {
-            ladderVec = Vector3.up * vertical;
+            ladderVec.y = vertical;
         }
-        else if (cameraProperties.isLookingDown(ladderAngle))
+        else if (playerCameraScript.isLookingDown(ladderAngle))
         {
-            ladderVec = Vector3.down * vertical;
+            ladderVec.y = -vertical;
         }
 
-        float moveRate = movementSpeed * (cameraProperties.getPitch() * 0.01f);
+        float moveRate = (playerCameraScript.getPitch() * 0.1f);
         ladderVec = ladderVec * moveRate;
-        ladderVec.z = horizontal;
         
-        playerCC.Move(ladderVec * Time.deltaTime);
+        playerCC.Move(transform.rotation * ladderVec * Time.deltaTime);
     }
     
     // True if object is decteted above head, false if not
@@ -355,42 +359,25 @@ public class PlayerController : MonoBehaviour
 
     private void SlideOffSteepSlope()
     {
-        RaycastHit hit;
-        if (Physics.SphereCast(transform.position, playerCC.radius, Vector3.down, out hit, 1) && !isCrouching)
+        if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, 2f))
         {
-            // Standing vec
-            incomingVec = hit.point - transform.position;
-            slopeDirection =  Vector3.Reflect(incomingVec, hit.normal);
-        }
-        else if (Physics.Raycast(transform.position, Vector3.down, out hit, 1))
-        {
-            // Crouch vec
             incomingVec = hit.point - transform.position;
             slopeDirection =  Vector3.Reflect(incomingVec, hit.normal);
         }
 
-        if(slopeDirection.y <= 0.1f && !isFlying && !isJumping)
+        if(slopeDirection.y <= -0.1f && !isFlying && !isJumping)
         {
-            slopeDirection += (Vector3.down * 5f);
+            slipeSpeed += Time.deltaTime * 1.5f;
 
-            if(slopeDirection.sqrMagnitude > 1)
-                slopeDirection = slopeDirection.normalized;
+            playerCC.Move(Vector3.down * 4 * Time.deltaTime);
+            playerCC.Move(slopeDirection * slipeSpeed * Time.deltaTime);
 
-            slipeSpeed += Time.deltaTime * gravity;
-            playerCC.Move(slopeDirection * Time.deltaTime * slipeSpeed);
-                
-            RestrictAirControl = true;
-            enableCrouching = false;
             enableJumping = false;
         }
         else if (playerCC.isGrounded || isFlying)
         {
-            RestrictAirControl = false;
-            enableCrouching = true;
-            slipeSpeed = 0;
-                
-            if(!isCrouching)
-                enableJumping = true;
+            slipeSpeed = 0;       
+            enableJumping = true;
         }
     }
 
@@ -408,7 +395,8 @@ public class PlayerController : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
-        isClimbingLadder = false;
+        if(isClimbingLadder)
+            isClimbingLadder = false;
     }
     private void OnDrawGizmos()
     {

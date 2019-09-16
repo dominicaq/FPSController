@@ -19,7 +19,7 @@ public class PlayerForce : MonoBehaviour
         playerMovement = GetComponent<PlayerController>();
     }
 
-    private void Update()
+    private void LateUpdate()
     {
         if(enableImpactForce)
         {

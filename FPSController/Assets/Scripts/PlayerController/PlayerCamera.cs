@@ -39,7 +39,7 @@ public class PlayerCamera : MonoBehaviour
         }
     }
 
-    private void Update()
+    private void LateUpdate()
     {
         // Shake effects
         float shakeValue = camShake.zShake;

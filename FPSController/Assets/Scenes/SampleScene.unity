@@ -456,7 +456,7 @@ PrefabInstance:
     - target: {fileID: 5706848513823807019, guid: 2ac529f81e364dc4a9f3040a4049d67b,
         type: 3}
       propertyPath: strength
-      value: 10
+      value: 125
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2ac529f81e364dc4a9f3040a4049d67b, type: 3}
@@ -6621,7 +6621,7 @@ PrefabInstance:
     - target: {fileID: 1768554361563764937, guid: bcd114faaad8e534280a8bdfc6be5c5e,
         type: 3}
       propertyPath: jumpHeight
-      value: 4
+      value: 45
       objectReference: {fileID: 0}
     - target: {fileID: 1768554361563764937, guid: bcd114faaad8e534280a8bdfc6be5c5e,
         type: 3}
@@ -6666,6 +6666,11 @@ PrefabInstance:
     - target: {fileID: 1768554361563764937, guid: bcd114faaad8e534280a8bdfc6be5c5e,
         type: 3}
       propertyPath: crouchSlideSpeed
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1768554361563764937, guid: bcd114faaad8e534280a8bdfc6be5c5e,
+        type: 3}
+      propertyPath: ladderAngle
       value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 4730940237327166006, guid: bcd114faaad8e534280a8bdfc6be5c5e,
@@ -6795,7 +6800,7 @@ PrefabInstance:
     - target: {fileID: 5706848513823807019, guid: 2ac529f81e364dc4a9f3040a4049d67b,
         type: 3}
       propertyPath: strength
-      value: 50
+      value: 750
       objectReference: {fileID: 0}
     - target: {fileID: 5706848514988135623, guid: 2ac529f81e364dc4a9f3040a4049d67b,
         type: 3}
@@ -6871,7 +6876,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6303501282228174511}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 7.22, y: 10.46, z: -6.9}
+  m_LocalPosition: {x: 7.22, y: 10.43, z: -6.9}
   m_LocalScale: {x: 0.1, y: 13.39575, z: 0.25}
   m_Children: []
   m_Father: {fileID: 0}
