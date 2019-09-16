@@ -11,6 +11,8 @@ Bellow are the listed notable features:
 - Can be affected by forces, Ex: Explosion force, Jump Pads, etc.
 - *Incomplete* Can move up and down objects tagged as ladders
 
+Side Note: By default the character uses Physics.gravity. Ideal gravity for default settings is -14.
+
 ## Player Camera
 - Aim punch
 - Camera wobble
