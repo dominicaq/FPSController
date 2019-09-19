@@ -1,17 +1,15 @@
 # FPSController
-The goal of this controller was to mimic how Valves character controller feels in their games, the reference I used was Team Fortress 2.
+The goal of this controller was to mimic how Valves character controller feels in their games.
 
-Bellow are the listed notable features:
+Notable features:
 
-## PlayerController:
+## PlayerController
 - Smooth crouching
 - Can walk up and down hills smoothly
-- If a slope is too steep the controller will slide down
+- If a slope is too steep the controller will slide down it
 - Double jumping can be increased to any number when enabled
 - Can be affected by forces, Ex: Explosion force, Jump Pads, etc.
-- *Incomplete* Can move up and down objects tagged as ladders
-
-Side Note: By default the character uses Physics.gravity. Ideal gravity for default settings is -14.
+- Can move up and down triggers tagged as ladders
 
 ## Player Camera
 - Aim punch
@@ -19,5 +17,4 @@ Side Note: By default the character uses Physics.gravity. Ideal gravity for defa
 
 ### Future Goals
 - Network when Unity releases their new network API
-- Finish LadderMovement
 - Add Swimming

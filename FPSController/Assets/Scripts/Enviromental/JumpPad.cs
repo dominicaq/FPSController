@@ -33,8 +33,6 @@ public class JumpPad : MonoBehaviour
             }
 
             forceModifier.AddForce(strength);
-            playerConditions.RestrictAirControl = true;
-
             audioData.Play(0);
         }
     }

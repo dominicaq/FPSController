@@ -5,12 +5,11 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     [Header("Player Input")]
-    public bool RestrictAirControl = false;
+    [SerializeField] private bool enableCrouchToggle = false;
+    private Vector3 moveDirection;
     private float horizontal;
     private float vertical;
-    private Vector3 moveDirection;
     private bool enableJumping = true;
-    [SerializeField] private bool enableCrouchToggle = false;
     private bool enableCrouching = true;
 
     [Header("Player Movement")]
@@ -21,10 +20,10 @@ public class PlayerController : MonoBehaviour
     [Header("Crouching")]
     [SerializeField] private float crouchHeight = 1.2f;
     [SerializeField] private Vector3 crouchCenter = new Vector3(0, 0.25f, 0);
-    [SerializeField] private float crouchDecelerateSpeed = 2.0f;
+    [SerializeField] private float crouchDecelerateRate = 2.0f;
     [SerializeField] private float crouchTransitionDuration = 1f;
     [SerializeField] private AnimationCurve crouchTransitionCurve = AnimationCurve.EaseInOut(0f,0f,1f,1f);
-    private bool duringCrouchAnimation;
+    private bool isCurrentlyCrouching;
     private bool crouchOnLanding;
     private float crouchCamHeight;
     private float initCamHeight;
@@ -43,8 +42,8 @@ public class PlayerController : MonoBehaviour
     private float initPlayerHeight;
 
     [Header("Gravity")]
+    public float gravity = Physics.gravity.y;
     public float velocity = 0.0f;
-    [SerializeField] private float slopeRayLength = 1.5f;
     private PlayerForce forceModifier;
 
     [Header("Slope Sliding")]
@@ -60,11 +59,9 @@ public class PlayerController : MonoBehaviour
 
     [Header("Character Controller")]
     private CharacterController playerCC;
-    private Transform self;
 
     [Header("Character Camera")]
     private Transform playerCamera;
-    private CameraShake playerShake;
     private PlayerCamera playerCameraScript;
 
 
@@ -74,7 +71,6 @@ public class PlayerController : MonoBehaviour
         // Player Camera
         playerCamera = transform.GetChild(0);
         playerCameraScript = playerCamera.GetComponent<PlayerCamera>();
-        playerShake = playerCamera.GetComponent<CameraShake>();
 
         // Character Controller and Player force modifier
         playerCC = GetComponent<CharacterController>();
@@ -99,12 +95,12 @@ public class PlayerController : MonoBehaviour
             Jump();
         }
 
-        if (Input.GetButtonDown("Crouch") && !duringCrouchAnimation)
+        if (Input.GetButtonDown("Crouch") && !isCurrentlyCrouching)
         {
             Crouch();
             crouchOnLanding = !playerCC.isGrounded ? true : false;
         }
-        else if (!Input.GetKey(KeyCode.C) && isCrouching && !duringCrouchAnimation && !enableCrouchToggle)
+        else if (!Input.GetKey(KeyCode.C) && isCrouching && !isCurrentlyCrouching && !enableCrouchToggle)
         {
             Crouch();
             crouchOnLanding = !playerCC.isGrounded ? true : false;
@@ -134,7 +130,7 @@ public class PlayerController : MonoBehaviour
             PlayerMove();
         }
 
-        RotateBodyWithCamera();
+        RotateBodyWithView();
         SlideOffSteepSlope();
     }
 
@@ -165,14 +161,7 @@ public class PlayerController : MonoBehaviour
     private void PlayerMove()
     {
         // Gravity
-        velocity += Time.deltaTime * Physics.gravity.y;
-
-        if(!playerCC.isGrounded && RestrictAirControl)
-        {
-            horizontal = horizontal / 2;
-            vertical = vertical / 4;
-        }
-
+        velocity += Time.deltaTime * gravity;
         moveDirection = new Vector3 (horizontal,0,vertical);
 
         // Prevent Execessive diagonal movement
@@ -188,15 +177,9 @@ public class PlayerController : MonoBehaviour
         
         if(playerCC.isGrounded)
         {
-            if(velocity < -7f)
-            {
-                playerShake.InduceStress(Mathf.Abs(velocity));
-            }
-
             canJumpInAir = true;
             isJumping = false;
             jumpCounter = 0;
-            
             velocity = 0;
         }
 
@@ -235,13 +218,16 @@ public class PlayerController : MonoBehaviour
         {
             if(!isCrouching)
             {
-                StartCoroutine("CrouchRoutine");
-                StartCoroutine("MovespeedDecelerateRoutine");
+                StartCoroutine(CrouchRoutine());
+
+                if(!isFlying && !isJumping)
+                    StartCoroutine(AdjustSpeedRoutine(crouchDecelerateRate, crouchMovementSpeed));
+
                 isCrouching = true;
             }
             else if (!HeadCheck())
             {
-                StartCoroutine("CrouchRoutine");
+                StartCoroutine(CrouchRoutine());
                 movementSpeed = initMoveSpeed;
                 isCrouching = false;
             }
@@ -250,7 +236,7 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator CrouchRoutine()
     {
-        duringCrouchAnimation = true;
+        isCurrentlyCrouching = true;
 
         float crouchParam = 0f;
         float smoothCrouchParam = 0f;
@@ -290,49 +276,20 @@ public class PlayerController : MonoBehaviour
             yield return null;
         }
 
-        duringCrouchAnimation = false;
+        isCurrentlyCrouching = false;
     }
 
-    private IEnumerator MovespeedDecelerateRoutine()
+    public IEnumerator AdjustSpeedRoutine(float rate, float newSpeed)
     {
         float elapsedTime = 0.0f;
 
         while(elapsedTime < 1f)
         {
-            if(!isFlying && !isJumping)
-            {
-                elapsedTime += crouchDecelerateSpeed * Time.deltaTime;
-                movementSpeed = Mathf.Lerp(initMoveSpeed, crouchMovementSpeed, elapsedTime);
-            }
+            elapsedTime += Time.deltaTime * rate;
+            movementSpeed = Mathf.Lerp(movementSpeed, newSpeed, elapsedTime);
 
             yield return null;
         }
-    }
-
-    // TODO: Rework ladder movement
-    private void LadderMovement()
-    {
-        velocity = 0;
-        enableJumping  = false;
-
-        Vector3 ladderVec = new Vector3 (horizontal,vertical,0);
-        if(ladderVec.sqrMagnitude > 1)
-            moveDirection = moveDirection.normalized;
-        
-        // Move controller based on camera rotation
-        if(playerCameraScript.isLookingUp(ladderAngle))
-        {
-            ladderVec.y = vertical;
-        }
-        else if (playerCameraScript.isLookingDown(ladderAngle))
-        {
-            ladderVec.y = -vertical;
-        }
-
-        float moveRate = (playerCameraScript.getPitch() * 0.1f);
-        ladderVec = ladderVec * moveRate;
-        
-        playerCC.Move(transform.rotation * ladderVec * Time.deltaTime);
     }
     
     // True if object is decteted above head, false if not
@@ -348,7 +305,7 @@ public class PlayerController : MonoBehaviour
             return false;
 
         RaycastHit hit;
-        if (Physics.Raycast(transform.position, Vector3.down, out hit, slopeRayLength))
+        if (Physics.Raycast(transform.position, Vector3.down, out hit, 1.5f))
         {
             if (hit.normal != Vector3.up)
                 return true;
@@ -381,16 +338,48 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void RotateBodyWithCamera()
+    private void RotateBodyWithView()
     {
         Vector3 bodyRot = playerCamera.eulerAngles;
         bodyRot.x = 0f;
         transform.eulerAngles = bodyRot;
     }
 
+    private void LadderMovement()
+    {
+        velocity = 0;
+        enableJumping  = false;
+        Vector3 ladderVec = Vector3.zero;
+
+        if(playerCC.isGrounded)
+        {
+            ladderVec = new Vector3 (horizontal,vertical,vertical);
+        }
+        else
+        {
+            ladderVec = new Vector3 (horizontal,vertical,0);
+        }
+        
+        // Move controller based on camera rotation
+        if(playerCameraScript.isLookingUp(ladderAngle))
+        {
+            ladderVec.y = vertical;
+        }
+        else if (playerCameraScript.isLookingDown(ladderAngle))
+        {
+            ladderVec.y = -vertical;
+        }
+
+        float moveRate = (playerCameraScript.getPitch() * 0.1f);
+        ladderVec = ladderVec * moveRate;
+        
+        playerCC.Move(transform.rotation * ladderVec * Time.deltaTime);
+    }
+
     private void OnTriggerStay(Collider other)
     {
-        isClimbingLadder = other.transform.tag == "Ladder";
+        if((playerCC.isGrounded || isJumping || isFlying) && other.transform.tag == "Ladder")
+            isClimbingLadder = true;
     }
 
     private void OnTriggerExit(Collider other)
@@ -398,7 +387,9 @@ public class PlayerController : MonoBehaviour
         if(isClimbingLadder)
             isClimbingLadder = false;
     }
-    private void OnDrawGizmos()
+
+    // Debugging
+    private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.blue;
         float rayLength = isCrouching ? crouchCenter.y + 0.75f : .6f;

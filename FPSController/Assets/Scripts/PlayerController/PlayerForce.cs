@@ -110,7 +110,7 @@ public class PlayerForce : MonoBehaviour
         }
     }
 
-    void OnDrawGizmos()
+    private void OnDrawGizmosSelected()
     { 
         float gizmoRayLength = 0.1f;
         Gizmos.color = Color.yellow;
