@@ -24,7 +24,7 @@ public class JumpPad : MonoBehaviour
             forceModifier = other.GetComponent<PlayerForce>();
 
             // Zero for new force
-            forceModifier.impact = Vector3.zero;
+            forceModifier.velocity = Vector3.zero;
 
             if (transform.eulerAngles != Vector3.zero)
             {

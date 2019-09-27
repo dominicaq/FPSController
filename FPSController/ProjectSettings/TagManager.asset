@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Unit
   - Ladder
+  - Water
   layers:
   - Default
   - TransparentFX

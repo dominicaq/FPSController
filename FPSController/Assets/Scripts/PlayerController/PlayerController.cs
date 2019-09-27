@@ -5,8 +5,8 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     [Header("Player Input")]
+    [SerializeField] private Vector3 velocity;
     [SerializeField] private bool enableCrouchToggle = false;
-    private Vector3 moveDirection;
     private float horizontal;
     private float vertical;
     private bool enableJumping = true;
@@ -42,8 +42,8 @@ public class PlayerController : MonoBehaviour
     private float initPlayerHeight;
 
     [Header("Gravity")]
-    public float gravity = Physics.gravity.y;
-    public float velocity = 0.0f;
+    public float worldGravity = Physics.gravity.y;
+    public float gravity = 0.0f;
     private PlayerForce forceModifier;
 
     [Header("Slope Sliding")]
@@ -56,6 +56,7 @@ public class PlayerController : MonoBehaviour
     public bool isJumping = false;
     public bool isFlying = false;
     public bool isClimbingLadder = false;
+    public bool isSwimming = false;
 
     [Header("Character Controller")]
     private CharacterController playerCC;
@@ -90,7 +91,7 @@ public class PlayerController : MonoBehaviour
         horizontal = Input.GetAxis("Horizontal");
         vertical = Input.GetAxis("Vertical");
 
-        if (Input.GetKeyDown(KeyCode.Space) && enableJumping)
+        if (Input.GetButtonDown("Jump") && enableJumping && !isSwimming)
         {
             Jump();
         }
@@ -100,7 +101,7 @@ public class PlayerController : MonoBehaviour
             Crouch();
             crouchOnLanding = !playerCC.isGrounded ? true : false;
         }
-        else if (!Input.GetKey(KeyCode.C) && isCrouching && !isCurrentlyCrouching && !enableCrouchToggle)
+        else if (!Input.GetButton("Crouch") && isCrouching && !isCurrentlyCrouching && !enableCrouchToggle)
         {
             Crouch();
             crouchOnLanding = !playerCC.isGrounded ? true : false;
@@ -122,25 +123,29 @@ public class PlayerController : MonoBehaviour
     {
         if(isClimbingLadder)
         {
-            LadderMovement();
+            LadderVelocity();
+        }
+        else if (isSwimming)
+        {
+            SwimVelocity();
         }
         else
         {
             enableJumping = isCrouching ? false : true;
-            PlayerMove();
+            PlayerVelocity();
         }
 
         RotateBodyWithView();
-        SlideOffSteepSlope();
+        SlideOffSlope();
     }
 
     // For things that need constant updating
     private void PlayerMisc()
-    {        
+    {
         // Prevent player from excessive floating when jumping
         if (HeadCheck() && isJumping && !isFlying)
         {
-            velocity = -0.5f;
+            gravity = -0.5f;
         }
 
         // Perform crouch upon landing
@@ -157,30 +162,30 @@ public class PlayerController : MonoBehaviour
         }
     }
     
-    // Gravity and movement vector
-    private void PlayerMove()
+    // Main movement function
+    private void PlayerVelocity()
     {
         // Gravity
-        velocity += Time.deltaTime * gravity;
-        moveDirection = new Vector3 (horizontal,0,vertical);
+        gravity += Time.deltaTime * worldGravity;
+        velocity = new Vector3 (horizontal,0,vertical);
 
         // Prevent Execessive diagonal movement
-        if(moveDirection.sqrMagnitude > 1)
+        if(velocity.sqrMagnitude > 1)
         {   
-            moveDirection = moveDirection.normalized;
+            velocity = velocity.normalized;
         }
 
         // Finalization
-        moveDirection = transform.rotation * moveDirection * movementSpeed;
-        moveDirection.y = velocity;
-        playerCC.Move(moveDirection * Time.deltaTime);
+        velocity = transform.rotation * velocity * movementSpeed;
+        velocity.y = gravity;
+        playerCC.Move(velocity * Time.deltaTime);
         
         if(playerCC.isGrounded)
         {
             canJumpInAir = true;
             isJumping = false;
             jumpCounter = 0;
-            velocity = 0;
+            gravity = 0;
         }
 
         if(IsOnSlope())
@@ -198,11 +203,10 @@ public class PlayerController : MonoBehaviour
             canJumpInAir = false;
         }
 
-        if(isJumping)
+        // Multi jump
+        if(isJumping && maximumJumps != jumpCounter)
         {   
-            // Multi jump
-            if(maximumJumps != jumpCounter)
-                jumpCounter += 1;
+            jumpCounter += 1;
         }
 
         // AddForce() will make isJumping true
@@ -314,7 +318,7 @@ public class PlayerController : MonoBehaviour
         return false;
     }
 
-    private void SlideOffSteepSlope()
+    private void SlideOffSlope()
     {
         if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, 2f))
         {
@@ -345,47 +349,85 @@ public class PlayerController : MonoBehaviour
         transform.eulerAngles = bodyRot;
     }
 
-    private void LadderMovement()
+    private void LadderVelocity()
     {
-        velocity = 0;
+        gravity = 0;
         enableJumping  = false;
-        Vector3 ladderVec = Vector3.zero;
 
         if(playerCC.isGrounded)
         {
-            ladderVec = new Vector3 (horizontal,vertical,vertical);
+            velocity = new Vector3 (horizontal,vertical,vertical);
         }
         else
         {
-            ladderVec = new Vector3 (horizontal,vertical,0);
+            velocity = new Vector3 (horizontal,vertical,0);
         }
         
-        // Move controller based on camera rotation
-        if(playerCameraScript.isLookingUp(ladderAngle))
+        if (playerCameraScript.isLookingDown(ladderAngle))
         {
-            ladderVec.y = vertical;
-        }
-        else if (playerCameraScript.isLookingDown(ladderAngle))
-        {
-            ladderVec.y = -vertical;
+            velocity.y = -vertical;
         }
 
         float moveRate = (playerCameraScript.getPitch() * 0.1f);
-        ladderVec = ladderVec * moveRate;
+        velocity = velocity * moveRate;
         
-        playerCC.Move(transform.rotation * ladderVec * Time.deltaTime);
+        playerCC.Move(transform.rotation * velocity * Time.deltaTime);
     }
 
     private void OnTriggerStay(Collider other)
     {
-        if((playerCC.isGrounded || isJumping || isFlying) && other.transform.tag == "Ladder")
+        if((playerCC.isGrounded || isJumping || isFlying) && !isSwimming && other.transform.tag == "Ladder")
             isClimbingLadder = true;
+
+        if(other.transform.tag =="Water")
+            isSwimming = true;
     }
 
     private void OnTriggerExit(Collider other)
     {
         if(isClimbingLadder)
             isClimbingLadder = false;
+        
+        if(isSwimming)
+            isSwimming = false;
+    }
+
+    // Early version of swimming
+    private void SwimVelocity()
+    {
+        enableJumping = false;
+        isJumping = false;
+        isFlying = false;
+        
+        velocity = new Vector3 (horizontal,0,vertical);
+
+        // Prevent Execessive diagonal movement
+        if(velocity.sqrMagnitude > 1)
+        {   
+            velocity = velocity.normalized;
+        }
+
+        if (Input.GetButton("Jump"))
+        {
+            gravity += 10f * Time.deltaTime;
+            if (gravity >= 3)
+            {
+                gravity = 3;
+            }
+        }
+        else
+        {
+            gravity -= 5f * Time.deltaTime;
+            if (gravity <= -2)
+            {
+                gravity = -2;
+            }
+        }
+
+        // Finalization
+        velocity = transform.rotation * velocity * movementSpeed;
+        velocity.y = gravity;
+        playerCC.Move(velocity * Time.deltaTime);
     }
 
     // Debugging

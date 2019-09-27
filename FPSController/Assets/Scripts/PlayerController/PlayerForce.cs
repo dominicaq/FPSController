@@ -3,11 +3,11 @@
 public class PlayerForce : MonoBehaviour
 {
     [Header("Character Force Conditions")]
-    [SerializeField] private bool enableImpactForce = true;
+    [SerializeField] private bool enablevelocityForce = true;
     [SerializeField] private bool collidedWithWall = false;
 
     [Header("Force Vector")]
-    public Vector3 impact = Vector3.zero;
+    public Vector3 velocity = Vector3.zero;
 
     // Scripts
     private CharacterController playerCC;
@@ -21,11 +21,11 @@ public class PlayerForce : MonoBehaviour
 
     private void LateUpdate()
     {
-        if(enableImpactForce)
+        if(enablevelocityForce)
         {
             if(collidedWithWall && !playerCC.isGrounded)
             {
-                impact = Vector3.Lerp(impact, Vector3.zero, Time.deltaTime * 2.5f);
+                velocity = Vector3.Lerp(velocity, Vector3.zero, Time.deltaTime * 2.5f);
             }
             
             PlayerImpulse();
@@ -43,51 +43,51 @@ public class PlayerForce : MonoBehaviour
             dir.y = dir.y * 2.5f;
         }
 
-        playerMovement.velocity = 0;
-        impact -= Vector3.Reflect(dir, Vector3.zero);
+        playerMovement.gravity = 0;
+        velocity -= Vector3.Reflect(dir, Vector3.zero);
     }    
 
     public void AddForce(float force)
     {
         playerMovement.isJumping = true;
-        playerMovement.velocity = Mathf.Sqrt(force);
+        playerMovement.gravity = Mathf.Sqrt(force);
     }
 
     private void PlayerImpulse()
     {
-        if (impact.magnitude > .3f) 
+        if (velocity.magnitude > .3f) 
         {
-            impact = Vector3.Lerp(impact, Vector3.zero, Time.deltaTime);
+            velocity = Vector3.Lerp(velocity, Vector3.zero, Time.deltaTime);
 
             // Decelerate on ground
             if(playerCC.isGrounded)
             {
-                impact = Vector3.Lerp(impact, Vector3.zero, Time.deltaTime * 5f );
-                impact.y = 0;
+                velocity = Vector3.Lerp(velocity, Vector3.zero, Time.deltaTime * 5f );
+                velocity.y = 0;
 
                 // Decelerate faster if player input detected
                 if ((Input.GetAxis("Horizontal") != 0 || Input.GetAxis("Vertical") != 0) && !playerCC.isGrounded)
                 {
-                    impact.x = Mathf.Lerp(impact.x, 0, Time.deltaTime * 15f );
-                    impact.z = Mathf.Lerp(impact.z, 0, Time.deltaTime * 15f );
+                    velocity.x = Mathf.Lerp(velocity.x, 0, Time.deltaTime * 15f );
+                    velocity.z = Mathf.Lerp(velocity.z, 0, Time.deltaTime * 15f );
                 }
             }
 
-            // Prevent impact from pushing player into ceiling
+            // Prevent velocity from pushing player into ceiling
             if(playerMovement.HeadCheck())
             {
-                impact = Vector3.Lerp(impact, Vector3.zero, Time.deltaTime * 30f);
+                velocity = Vector3.Lerp(velocity, Vector3.zero, Time.deltaTime * 30f);
             }
         }
 
         // Finalization
-        if(impact.magnitude > 1 || impact.magnitude < -1)
+        if(velocity.magnitude > 1 || velocity.magnitude < -1)
         {
-            playerCC.Move(impact * Time.deltaTime);
+            playerCC.Move(velocity * Time.deltaTime);
         }
         else if (playerCC.isGrounded)
         {
-            impact = Vector3.zero;
+            velocity = Vector3.zero;
             playerMovement.isFlying = false;
             collidedWithWall = false;
         }
@@ -96,12 +96,12 @@ public class PlayerForce : MonoBehaviour
     // DON'T USE MOVEMENT FUNCTIONS INSIDE, STACKOVERFLOW ERROR WILL OCCUR
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
-        // If player hits a wall while being launched, nullify impact immediately
+        // If player hits a wall while being launched, nullify velocity immediately
         float rayLength = 0.5f;
 
         // Sphere cast or ray cast and is flying
-        bool isValid = (Physics.SphereCast(transform.position, playerCC.radius / 1.5f, impact, out RaycastHit hitInfo, rayLength) ||
-        Physics.Raycast(transform.position, impact)) 
+        bool isValid = (Physics.SphereCast(transform.position, playerCC.radius / 1.5f, velocity, out RaycastHit hitInfo, rayLength) ||
+        Physics.Raycast(transform.position, velocity)) 
         && playerMovement.isFlying;
 
         if(isValid)
@@ -114,7 +114,7 @@ public class PlayerForce : MonoBehaviour
     { 
         float gizmoRayLength = 0.1f;
         Gizmos.color = Color.yellow;
-        Gizmos.DrawLine(transform.position, transform.position + impact * gizmoRayLength);
-        Gizmos.DrawWireSphere(transform.position + impact * gizmoRayLength, 0.5f / 1.5f);
+        Gizmos.DrawLine(transform.position, transform.position + velocity * gizmoRayLength);
+        Gizmos.DrawWireSphere(transform.position + velocity * gizmoRayLength, 0.5f / 1.5f);
     }
 }
