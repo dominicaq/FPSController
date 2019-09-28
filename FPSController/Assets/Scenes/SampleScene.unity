@@ -1124,8 +1124,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 342268284}
   m_LocalRotation: {x: -0.3080152, y: -0.1381353, z: 0.22709738, w: 0.9134944}
-  m_LocalPosition: {x: -72.37, y: -32.66, z: 29.39}
-  m_LocalScale: {x: 5.0699453, y: 0.7511454, z: 6.9361}
+  m_LocalPosition: {x: -62.2, y: -26.7, z: 30.7}
+  m_LocalScale: {x: 3.41618, y: 0.7511454, z: 6.463266}
   m_Children: []
   m_Father: {fileID: 509899522}
   m_RootOrder: 51
@@ -2033,6 +2033,7 @@ Transform:
   - {fileID: 1254318962}
   - {fileID: 1456535016}
   - {fileID: 2417957}
+  - {fileID: 1765987737}
   m_Father: {fileID: 0}
   m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -6015,6 +6016,99 @@ Transform:
   m_Father: {fileID: 509899522}
   m_RootOrder: 25
   m_LocalEulerAnglesHint: {x: 0, y: 51.827003, z: 0}
+--- !u!1 &1765987736
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1765987737}
+  - component: {fileID: 1765987740}
+  - component: {fileID: 1765987739}
+  - component: {fileID: 1765987738}
+  m_Layer: 0
+  m_Name: Cube (26)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 127
+  m_IsActive: 1
+--- !u!4 &1765987737
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1765987736}
+  m_LocalRotation: {x: 0.43529764, y: 0.065048546, z: 0.25772712, w: 0.860152}
+  m_LocalPosition: {x: -89.96, y: -101.78, z: -62.55}
+  m_LocalScale: {x: 3.09968, y: 2.5952199, z: 0.30001}
+  m_Children: []
+  m_Father: {fileID: 509899522}
+  m_RootOrder: 56
+  m_LocalEulerAnglesHint: {x: 45.669003, y: 28.765001, z: 45.685}
+--- !u!64 &1765987738
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1765987736}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Convex: 0
+  m_CookingOptions: 14
+  m_Mesh: {fileID: 717489586}
+--- !u!23 &1765987739
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1765987736}
+  m_Enabled: 1
+  m_CastShadows: 2
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 76ff537c8e1a84345868e6aeee938ab3, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 2
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+--- !u!33 &1765987740
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1765987736}
+  m_Mesh: {fileID: 717489586}
 --- !u!1 &1798422475
 GameObject:
   m_ObjectHideFlags: 0
@@ -7426,9 +7520,19 @@ PrefabInstance:
       propertyPath: enableMultiJump
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 426765841801603233, guid: bcd114faaad8e534280a8bdfc6be5c5e,
+        type: 3}
+      propertyPath: jumpHeight
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: 6683529328521423095, guid: bcd114faaad8e534280a8bdfc6be5c5e,
         type: 3}
       propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6683529328003801285, guid: bcd114faaad8e534280a8bdfc6be5c5e,
+        type: 3}
+      propertyPath: enable
       value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []

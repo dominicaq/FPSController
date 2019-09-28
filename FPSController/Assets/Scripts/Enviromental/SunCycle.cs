@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class SunCycle : MonoBehaviour
 {
-    [SerializeField] private bool turnOn;
+    [SerializeField] private bool turnOn = false;
     [SerializeField] private float turnRate = 2.0f;
     private float rate = 0.0f;
     

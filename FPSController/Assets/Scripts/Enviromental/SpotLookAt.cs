@@ -8,7 +8,7 @@ public class SpotLookAt : MonoBehaviour
     [SerializeField] private bool turnOn;
     [SerializeField] private int selection = 0;
     [SerializeField] private float turnRate = 1.0f, waitTime = 1.0f;
-    [SerializeField] private Transform[] targets;
+    [SerializeField] private Transform[] targets = new Transform[0];
 
     void Start()
     {

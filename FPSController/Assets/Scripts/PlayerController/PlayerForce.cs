@@ -2,84 +2,45 @@
 
 public class PlayerForce : MonoBehaviour
 {
-    [Header("Character Force Conditions")]
-    [SerializeField] private bool enablevelocityForce = true;
-    [SerializeField] private bool collidedWithWall = false;
-
     [Header("Force Vector")]
     public Vector3 velocity = Vector3.zero;
 
+    [Header("Force Conditions")]
+    [SerializeField] private bool enablevelocityForce = true;
+    [SerializeField] private bool collidedWithWall = false;
+
     // Scripts
     private CharacterController playerCC;
-    private PlayerController playerMovement;
+    private PlayerController playerController;
 
     private void Awake()
     {
         playerCC = GetComponent<CharacterController>();
-        playerMovement = GetComponent<PlayerController>();
+        playerController = GetComponent<PlayerController>();
     }
 
     private void LateUpdate()
     {
         if(enablevelocityForce)
-        {
-            if(collidedWithWall && !playerCC.isGrounded)
-            {
-                velocity = Vector3.Lerp(velocity, Vector3.zero, Time.deltaTime * 2.5f);
-            }
-            
+        {   
             PlayerImpulse();
         }
-    }
-    
-    public void AddForce(Vector3 dir)
-    {
-        playerMovement.isFlying = true;
-        collidedWithWall = false;
-
-        // Additional strength if player is jumping
-        if(playerMovement.isCrouching && playerMovement.isJumping)
-        {
-            dir.y = dir.y * 2.5f;
-        }
-
-        playerMovement.gravity = 0;
-        velocity -= Vector3.Reflect(dir, Vector3.zero);
-    }    
-
-    public void AddForce(float force)
-    {
-        playerMovement.isJumping = true;
-        playerMovement.gravity = Mathf.Sqrt(force);
     }
 
     private void PlayerImpulse()
     {
-        if (velocity.magnitude > .3f) 
+        float decelRate = 1;
+        if(collidedWithWall && !playerCC.isGrounded)
+            decelRate = 2.5f;
+
+        // Decelerate on ground or head bump
+        if(playerCC.isGrounded || playerController.HeadCheck())
         {
-            velocity = Vector3.Lerp(velocity, Vector3.zero, Time.deltaTime);
-
-            // Decelerate on ground
-            if(playerCC.isGrounded)
-            {
-                velocity = Vector3.Lerp(velocity, Vector3.zero, Time.deltaTime * 5f );
-                velocity.y = 0;
-
-                // Decelerate faster if player input detected
-                if ((Input.GetAxis("Horizontal") != 0 || Input.GetAxis("Vertical") != 0) && !playerCC.isGrounded)
-                {
-                    velocity.x = Mathf.Lerp(velocity.x, 0, Time.deltaTime * 15f );
-                    velocity.z = Mathf.Lerp(velocity.z, 0, Time.deltaTime * 15f );
-                }
-            }
-
-            // Prevent velocity from pushing player into ceiling
-            if(playerMovement.HeadCheck())
-            {
-                velocity = Vector3.Lerp(velocity, Vector3.zero, Time.deltaTime * 30f);
-            }
+            decelRate = 5f;
+            velocity.y = 0;
         }
 
+        velocity = Vector3.Lerp(velocity, Vector3.zero, decelRate * Time.deltaTime);
         // Finalization
         if(velocity.magnitude > 1 || velocity.magnitude < -1)
         {
@@ -88,7 +49,7 @@ public class PlayerForce : MonoBehaviour
         else if (playerCC.isGrounded)
         {
             velocity = Vector3.zero;
-            playerMovement.isFlying = false;
+            playerController.isFlying = false;
             collidedWithWall = false;
         }
     }
@@ -101,13 +62,28 @@ public class PlayerForce : MonoBehaviour
 
         // Sphere cast or ray cast and is flying
         bool isValid = (Physics.SphereCast(transform.position, playerCC.radius / 1.5f, velocity, out RaycastHit hitInfo, rayLength) ||
-        Physics.Raycast(transform.position, velocity)) 
-        && playerMovement.isFlying;
+        Physics.Raycast(transform.position, velocity)) && 
+        playerController.isFlying;
 
         if(isValid)
         {
             collidedWithWall = true;
         }
+    }
+
+    public void AddForce(Vector3 dir)
+    {
+        playerController.isFlying = true;
+        collidedWithWall = false;
+
+        playerController.gravity = 0;
+        velocity -= Vector3.Reflect(dir, Vector3.zero);
+    }    
+
+    public void AddForce(float upwardForce)
+    {
+        playerController.isJumping = true;
+        playerController.gravity = upwardForce;
     }
 
     private void OnDrawGizmosSelected()

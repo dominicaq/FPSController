@@ -5,7 +5,7 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     [Header("Player Input")]
-    [SerializeField] private Vector3 velocity;
+    public Vector3 velocity;
     [SerializeField] private bool enableCrouchToggle = false;
     private float horizontal;
     private float vertical;
@@ -42,12 +42,13 @@ public class PlayerController : MonoBehaviour
     private float initPlayerHeight;
 
     [Header("Gravity")]
-    public float worldGravity = Physics.gravity.y;
-    public float gravity = 0.0f;
+    public float gravity = -14f;
+    [SerializeField] private float worldGravity = Physics.gravity.y;
     private PlayerForce forceModifier;
 
     [Header("Slope Sliding")]
     [SerializeField] private float slipeSpeed = 0.0f;
+    [SerializeField] private float slideRate = 1.5f;
     private Vector3 incomingVec;
     private Vector3 slopeDirection;
 
@@ -133,10 +134,10 @@ public class PlayerController : MonoBehaviour
         {
             enableJumping = isCrouching ? false : true;
             PlayerVelocity();
+            SlideOffSlope();
         }
 
         RotateBodyWithView();
-        SlideOffSlope();
     }
 
     // For things that need constant updating
@@ -171,9 +172,7 @@ public class PlayerController : MonoBehaviour
 
         // Prevent Execessive diagonal movement
         if(velocity.sqrMagnitude > 1)
-        {   
             velocity = velocity.normalized;
-        }
 
         // Finalization
         velocity = transform.rotation * velocity * movementSpeed;
@@ -328,9 +327,9 @@ public class PlayerController : MonoBehaviour
 
         if(slopeDirection.y <= -0.1f && !isFlying && !isJumping)
         {
-            slipeSpeed += Time.deltaTime * 1.5f;
+            slipeSpeed += Time.deltaTime * slideRate;
 
-            playerCC.Move(Vector3.down * 4 * Time.deltaTime);
+            playerCC.Move(Vector3.down * 5 * Time.deltaTime);
             playerCC.Move(slopeDirection * slipeSpeed * Time.deltaTime);
 
             enableJumping = false;
@@ -364,9 +363,7 @@ public class PlayerController : MonoBehaviour
         }
         
         if (playerCameraScript.isLookingDown(ladderAngle))
-        {
             velocity.y = -vertical;
-        }
 
         float moveRate = (playerCameraScript.getPitch() * 0.1f);
         velocity = velocity * moveRate;
@@ -403,25 +400,25 @@ public class PlayerController : MonoBehaviour
 
         // Prevent Execessive diagonal movement
         if(velocity.sqrMagnitude > 1)
-        {   
             velocity = velocity.normalized;
-        }
 
         if (Input.GetButton("Jump"))
         {
             gravity += 10f * Time.deltaTime;
+
             if (gravity >= 3)
-            {
                 gravity = 3;
-            }
+        }
+        else if (gravity < -1 && !playerCC.isGrounded)
+        {
+            gravity += -worldGravity * Time.deltaTime;
         }
         else
         {
             gravity -= 5f * Time.deltaTime;
-            if (gravity <= -2)
-            {
-                gravity = -2;
-            }
+
+            if (gravity <= -1)
+                gravity = -1;
         }
 
         // Finalization
