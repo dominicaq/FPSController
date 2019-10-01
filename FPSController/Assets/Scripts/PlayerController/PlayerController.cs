@@ -42,7 +42,7 @@ public class PlayerController : MonoBehaviour
     private float initPlayerHeight;
 
     [Header("Gravity")]
-    public float gravity = -14f;
+    public float gravity = 0;
     [SerializeField] private float worldGravity = Physics.gravity.y;
     private PlayerForce forceModifier;
 
@@ -409,7 +409,8 @@ public class PlayerController : MonoBehaviour
             if (gravity >= 3)
                 gravity = 3;
         }
-        else if (gravity < -1 && !playerCC.isGrounded)
+        
+        if (gravity < -1 && !playerCC.isGrounded)
         {
             gravity += -worldGravity * Time.deltaTime;
         }
