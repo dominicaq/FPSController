@@ -2,6 +2,7 @@
 
 public class JumpPad : MonoBehaviour
 {
+    [SerializeField] private bool enableJumpPad = true;
     [SerializeField] private float strength = 2;
     private CharacterController playerMovement;
     private PlayerForce forceModifier;
@@ -17,7 +18,7 @@ public class JumpPad : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.tag == "Player")
+        if (other.tag == "Player" && enableJumpPad)
         {
             playerMovement = other.GetComponent<CharacterController>();
             playerConditions = other.GetComponent<PlayerController>();
