@@ -1,29 +1,39 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Numerics;
+using UnityEngine;
+using Vector3 = UnityEngine.Vector3;
 
 public class InteractWorld : MonoBehaviour
 {
     [Header("Interact properties")]
-    [SerializeField] private bool isCarrying = false;
+    private bool isCarrying = false;
+    private bool isColliding = false;
     [SerializeField] private float interactArmLength = 2.0f;
     [SerializeField] private float liftCapacity = 5;
     [SerializeField] [Range(1, 15)] private float moveRate = 1;
-    [SerializeField] private bool isColliding = false;
-    
+
     [Header("Held Object")]
     [SerializeField] private Transform heldObject;
-    private Vector3 holdVector;
     private Vector3 rotatedVector = Vector3.zero;
+    private Vector3 holdVector;
     private Rigidbody heldObjectRB;
-    private Collider[] hitColliders;
 
-    [Header("Camera")]
+    [Header("Colliders")]
+    private Collider heldObjectCollider;
+    private Collider playerCollider;
+    
+    [Header("Player")]
     private Camera selfCam;
     private PlayerCamera playerCamera;
+    private int ignorePlayerMask;
 
-    private void Awake()
+    private void Start()
     {
         playerCamera = transform.GetComponent<PlayerCamera>();
         selfCam = transform.GetComponent<Camera>();
+
+        playerCollider = transform.parent.GetComponent<Collider>();
+        ignorePlayerMask = Physics.DefaultRaycastLayers & ~LayerMask.GetMask("Player");
     }
 
     private void Update()
@@ -39,58 +49,55 @@ public class InteractWorld : MonoBehaviour
                 Drop();
             }
         }
+        
+        // Movement type for no collisions present
+        if(!isColliding && isCarrying)
+            heldObject.position = Vector3.Lerp(heldObject.position, holdVector, Time.deltaTime * moveRate);
     }
 
     private void FixedUpdate() 
     {
         // Hold the object
-        if(heldObject != null && heldObjectRB != null)
+        if(heldObject && heldObjectRB)
         {
             isCarrying = true;
-            
-            if(!playerCamera.isLookingDown(65))
-            {
-                rotatedVector = rotatedVector = transform.rotation * (Vector3.forward * 1.5f);
-            }
 
-            // Rotation
+            // Holding
+            Vector3 forwardVector = Vector3.forward * 1.75f;
+            rotatedVector = transform.rotation * forwardVector;
+
+            if (Physics.Raycast(heldObject.position, Vector3.down) && rotatedVector.y <= -1.3f)
+            {
+                rotatedVector.y = -1.3f;
+            }
+            
+            holdVector = transform.position + rotatedVector;
+
+            // Object Rotation
             Vector3 desiredRot = transform.eulerAngles;
             desiredRot.x = 0;
             heldObject.eulerAngles = desiredRot;
-
-            holdVector = rotatedVector + transform.position;
             
-            // Movement for colliding (Not efficent but works)
-            hitColliders = Physics.OverlapSphere(heldObject.position, heldObject.localScale.x);
-            if(hitColliders.Length > 1)
-            {
-                for(int i = 0; i < hitColliders.Length; i++)
-                {
-                    if(hitColliders[i].transform.name != heldObject.name && hitColliders[i].transform.gameObject.layer != 8)
-                    {
-                        isColliding = true;
-                    }
-                }
-            }
-            else
-                isColliding = false;
-
             NullifyRbForces();
+            Vector3 boxSize = heldObjectCollider.bounds.size;
+            if (boxSize.y > 1)
+            {
+                boxSize.y += .87f;
+            }
             
+            isColliding = Physics.CheckBox(heldObject.position, boxSize / 2, heldObject.rotation, ignorePlayerMask);
+            if (isColliding && isCarrying)
+            {
+                heldObject.position = Vector3.MoveTowards(heldObject.transform.position, holdVector, Time.deltaTime * moveRate / 3);
+            }
+            
+            // Enforce distance between object
             float dist = Vector3.Distance(heldObject.position, transform.position);
-            if(dist > interactArmLength + .2f)
+            if (dist > interactArmLength + 1f)
+            {
                 Drop();
+            }
         }
-
-        if(isColliding && isCarrying)
-            heldObject.position = Vector3.MoveTowards(heldObject.transform.position, holdVector, Time.deltaTime * moveRate/2);
-    }
-
-    private void LateUpdate()
-    {
-        // Movement type for no collisions present
-        if(!isColliding && isCarrying)
-            heldObject.position = Vector3.Lerp(heldObject.position, holdVector, Time.deltaTime * moveRate);
     }
 
     private void PickUp()
@@ -99,42 +106,46 @@ public class InteractWorld : MonoBehaviour
         if (Physics.Raycast(interactRay, out RaycastHit hit, interactArmLength))
         {
             // Prevent grabbing sizes too big
-            float sizeCheck = hit.transform.localScale.x + hit.transform.localScale.y + hit.transform.localScale.z;
+            Transform hitObject = hit.transform;
+            float sizeCheck = hitObject.localScale.x + hitObject.localScale.y + hitObject.localScale.z;
 
-            if(hit.rigidbody != null && sizeCheck <= liftCapacity)
+            if(hit.rigidbody && sizeCheck <= liftCapacity)
             {
-                // Go through all child objects and make their colliders ignore player
-                Physics.IgnoreCollision(hit.transform.GetComponent<Collider>(), transform.parent.GetComponent<Collider>());
-                foreach(Transform child in hit.transform)
+                heldObjectCollider = hitObject.GetComponent<Collider>();
+                Physics.IgnoreCollision(heldObjectCollider, playerCollider);
+                foreach(Transform child in hitObject)
                 {
-                    if(child.GetComponent<Collider>() == null)
+                    Collider childCollider = child.GetComponent<Collider>();
+                    if(!childCollider)
                         break;
                     
-                    Physics.IgnoreCollision(child.GetComponent<Collider>(), transform.parent.GetComponent<Collider>());
+                    Physics.IgnoreCollision(childCollider, playerCollider);
                 }
                 
                 heldObject = hit.transform;
-                heldObject.gameObject.layer = 2;
                 heldObjectRB = hit.rigidbody;
+                heldObject.gameObject.layer = 2; // Ignore raycast layer
             }
         }
     }
 
     private void Drop()
     {
-        Physics.IgnoreCollision(heldObject.GetComponent<Collider>(), transform.parent.GetComponent<Collider>(), false);
-        heldObjectRB.useGravity = true;
+        Physics.IgnoreCollision(heldObjectCollider, playerCollider, false);
         heldObject.gameObject.layer = 0;
-        isCarrying = false;
-
+        heldObjectRB.useGravity = true;
+        
+        heldObjectCollider = null;
         heldObjectRB = null;
         heldObject = null;
+        
+        isCarrying = false;
     }
 
     private void NullifyRbForces()
     {
-        heldObjectRB.velocity = Vector3.zero;
-        heldObjectRB.useGravity = false;
         heldObjectRB.angularVelocity = Vector3.zero;
+        heldObjectRB.velocity        = Vector3.zero;
+        heldObjectRB.useGravity      = false;
     }
 }

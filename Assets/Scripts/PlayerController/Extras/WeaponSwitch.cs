@@ -1,44 +1,72 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class WeaponSwitch : MonoBehaviour
 {
-    public int selectedItem = 0;
-    [SerializeField] private int[] playerInventory;
+    [SerializeField] private int itemIndex = 0;
+    [SerializeField] private GameObject[] playerInventory;
+    [SerializeField] private GameObject selectedItem;
+    private int childCount = 0;
 
     void Start()
     {
-       playerInventory = new int[CountItems(transform)];
+       playerInventory = GetItems(gameObject);
+       SelectWeapon();
     }
 
-    // Update is called once per frame
+    private GameObject[] GetItems(GameObject backpack)
+    {
+        childCount = transform.childCount;
+        GameObject[] ret = new GameObject[childCount];
+        for(int i = 0; i < childCount; i++)
+        {
+            ret[i] = backpack.transform.GetChild(i).gameObject;
+        }
+
+        return ret;
+    }
+
+    public void AddNewItem(Transform newItem)
+    {
+        // WIP
+        Vector3 newPos = new Vector3(0.327f, -0.215f, 0);
+        newItem.SetParent(transform, false);
+        newItem.localPosition = newPos;
+        playerInventory = GetItems(gameObject);
+    }
+
     void Update()
     {
+        int previousItem = itemIndex;
+        // Input
         if (Input.GetAxis("Mouse ScrollWheel") > 0f ) // forward
         {
-            if(selectedItem >= playerInventory.Length-1)
-                selectedItem = 0;
+            if(itemIndex >= playerInventory.Length-1)
+                itemIndex = 0;
             else
-                selectedItem++;
+                itemIndex++;
         }
-        else if (Input.GetAxis("Mouse ScrollWheel") < 0f ) // backwards
+        else if (Input.GetAxis("Mouse ScrollWheel") < 0f ) // backward
         {
-            if (selectedItem <= 0)
-                selectedItem = playerInventory.Length-1;
+            if (itemIndex <= 0)
+                itemIndex = playerInventory.Length-1;
             else
-                selectedItem--;
-        }   
+                itemIndex--;
+        }
+
+        if(previousItem != itemIndex)
+            SelectWeapon();
     }
 
-    int CountItems(Transform a)
+    void SelectWeapon()
     {
-        int childCount = 0;
-        foreach (Transform b in a)
+        selectedItem = playerInventory[itemIndex];
+
+        for(int i = 0; i < playerInventory.Length; i++)
         {
-            childCount ++;
-            childCount += CountItems(b);
+            if(i == itemIndex)
+                playerInventory[i].SetActive(true);
+            else
+                playerInventory[i].SetActive(false);
         }
-        return childCount;
     }
 }

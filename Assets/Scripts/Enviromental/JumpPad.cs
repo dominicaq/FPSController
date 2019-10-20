@@ -18,7 +18,7 @@ public class JumpPad : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.tag == "Player" && enableJumpPad)
+        if (other.CompareTag("Player") && enableJumpPad)
         {
             playerMovement = other.GetComponent<CharacterController>();
             playerConditions = other.GetComponent<PlayerController>();
@@ -26,13 +26,7 @@ public class JumpPad : MonoBehaviour
 
             // Zero for new force
             forceModifier.velocity = Vector3.zero;
-
-            if (transform.eulerAngles != Vector3.zero)
-            {
-                // Old code broken
-                // If jumpPad is rotated, launch player accordingly
-            }
-
+            
             forceModifier.AddForce(strength);
             audioData.Play(0);
         }

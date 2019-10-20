@@ -6683,7 +6683,7 @@ GameObject:
   - component: {fileID: 2092992619}
   - component: {fileID: 2092992618}
   m_Layer: 0
-  m_Name: Rb_cube (6)
+  m_Name: TTT
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7152,6 +7152,11 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 7015208638802507530, guid: bcd114faaad8e534280a8bdfc6be5c5e,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 426765841801603247, guid: bcd114faaad8e534280a8bdfc6be5c5e,
         type: 3}
       propertyPath: m_Name
@@ -7175,7 +7180,7 @@ PrefabInstance:
     - target: {fileID: 426765841801603232, guid: bcd114faaad8e534280a8bdfc6be5c5e,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 3.07
+      value: 2.21
       objectReference: {fileID: 0}
     - target: {fileID: 426765841801603232, guid: bcd114faaad8e534280a8bdfc6be5c5e,
         type: 3}
@@ -7241,6 +7246,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Enabled
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 426765841801603233, guid: bcd114faaad8e534280a8bdfc6be5c5e,
+        type: 3}
+      propertyPath: movementSpeed
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 6683529328521423095, guid: bcd114faaad8e534280a8bdfc6be5c5e,
         type: 3}
@@ -7315,7 +7325,7 @@ PrefabInstance:
     - target: {fileID: 6683529328474683999, guid: bcd114faaad8e534280a8bdfc6be5c5e,
         type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6683529328772241952, guid: bcd114faaad8e534280a8bdfc6be5c5e,
         type: 3}
@@ -7337,6 +7347,11 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 8
       objectReference: {fileID: 0}
+    - target: {fileID: 6683529328772242013, guid: bcd114faaad8e534280a8bdfc6be5c5e,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 9133381860739521554, guid: bcd114faaad8e534280a8bdfc6be5c5e,
         type: 3}
       propertyPath: moveRate
@@ -7352,6 +7367,16 @@ PrefabInstance:
       propertyPath: isColliding
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 9133381860739521554, guid: bcd114faaad8e534280a8bdfc6be5c5e,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8934058232933369126, guid: bcd114faaad8e534280a8bdfc6be5c5e,
+        type: 3}
+      propertyPath: testTrans
+      value: 
+      objectReference: {fileID: 2092992617}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: bcd114faaad8e534280a8bdfc6be5c5e, type: 3}
 --- !u!1001 &8802843132998469942
@@ -7424,6 +7449,16 @@ PrefabInstance:
     - target: {fileID: 3330121342091563027, guid: 78476d9141d0e4043b87c5bae3c77594,
         type: 3}
       propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3389799288174361985, guid: 78476d9141d0e4043b87c5bae3c77594,
+        type: 3}
+      propertyPath: seekAngle
+      value: 45
+      objectReference: {fileID: 0}
+    - target: {fileID: 4744243698189390903, guid: 78476d9141d0e4043b87c5bae3c77594,
+        type: 3}
+      propertyPath: m_IsKinematic
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents:

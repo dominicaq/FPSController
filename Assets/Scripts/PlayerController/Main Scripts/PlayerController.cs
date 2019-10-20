@@ -124,7 +124,6 @@ public class PlayerController : MonoBehaviour
 
     private void LateUpdate() 
     {
-        
         if(isClimbingLadder)
         {
             LadderVelocity();
@@ -173,12 +172,13 @@ public class PlayerController : MonoBehaviour
         gravity += Time.deltaTime * gravityForce;
         velocity = new Vector3 (horizontal,0,vertical);
 
-        // Prevent Execessive diagonal movement
+        // Prevent excessive diagonal movement
         if(velocity.sqrMagnitude > 1)
             velocity = velocity.normalized;
 
         // Finalization
-        velocity = transform.rotation * velocity * movementSpeed;
+        velocity = transform.rotation * velocity;
+        velocity *= movementSpeed;
         velocity.y = gravity;
         playerCC.Move(velocity * Time.deltaTime);
         
@@ -192,7 +192,8 @@ public class PlayerController : MonoBehaviour
 
         if(IsOnSlope())
         {
-            playerCC.Move(Vector3.down * 5 * Time.deltaTime);
+            float slopeStep = Time.deltaTime * 5;
+            playerCC.Move(Vector3.down * slopeStep);
         }
     }
 
@@ -286,7 +287,7 @@ public class PlayerController : MonoBehaviour
         isCurrentlyCrouching = false;
     }
 
-    public IEnumerator AdjustSpeedRoutine(float rate, float newSpeed)
+    private IEnumerator AdjustSpeedRoutine(float rate, float newSpeed)
     {
         float elapsedTime = 0.0f;
 
@@ -299,7 +300,7 @@ public class PlayerController : MonoBehaviour
         }
     }
     
-    // True if object is decteted above head, false if not
+    // True if object is detected above head, false if not
     public bool HeadCheck()
     {
         float rayLength = isCrouching ? crouchCenter.y + 0.75f : .6f;
@@ -310,9 +311,8 @@ public class PlayerController : MonoBehaviour
     {
         if (isJumping)
             return false;
-
-        RaycastHit hit;
-        if (Physics.Raycast(transform.position, Vector3.down, out hit, 1.5f))
+        
+        if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, 1.5f))
         {
             if (hit.normal != Vector3.up)
                 return true;
@@ -356,31 +356,32 @@ public class PlayerController : MonoBehaviour
     {
         gravity = 0;
         enableJumping  = false;
-
-        if(playerCC.isGrounded)
+        
+        if(!playerCC.isGrounded)
         {
-            velocity = new Vector3 (horizontal,vertical,vertical);
+            velocity = new Vector3 (horizontal,vertical,0);
         }
         else
         {
-            velocity = new Vector3 (horizontal,vertical,0);
+            velocity = new Vector3(horizontal, vertical, vertical);
         }
         
         if (playerCameraScript.isLookingDown(ladderAngle))
             velocity.y = -vertical;
 
         float moveRate = (playerCameraScript.getPitch() * 0.1f);
-        velocity = velocity * moveRate;
-        
-        playerCC.Move(transform.rotation * velocity * Time.deltaTime);
+        velocity *= moveRate;
+
+        Vector3 ladderDiretion= transform.rotation * velocity;
+        playerCC.Move(ladderDiretion * Time.deltaTime);
     }
 
     private void OnTriggerStay(Collider other)
     {
-        if((playerCC.isGrounded || isJumping || isFlying) && !isSwimming && other.transform.tag == "Ladder")
+        if((playerCC.isGrounded || isJumping || isFlying) && !isSwimming && other.CompareTag("Ladder"))
             isClimbingLadder = true;
 
-        if(other.transform.tag =="Water")
+        if(other.CompareTag("Water"))
             isSwimming = true;
     }
 
@@ -402,7 +403,7 @@ public class PlayerController : MonoBehaviour
         
         velocity = new Vector3 (horizontal,0,vertical);
 
-        // Prevent Execessive diagonal movement
+        // Prevent excessive diagonal movement
         if(velocity.sqrMagnitude > 1)
             velocity = velocity.normalized;
 
@@ -427,7 +428,8 @@ public class PlayerController : MonoBehaviour
         }
 
         // Finalization
-        velocity = transform.rotation * velocity * movementSpeed;
+        velocity = transform.rotation * velocity;
+        velocity *= movementSpeed;
         velocity.y = gravity;
         playerCC.Move(velocity * Time.deltaTime);
     }

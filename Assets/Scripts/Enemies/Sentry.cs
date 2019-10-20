@@ -1,5 +1,8 @@
 ﻿using UnityEngine;
+
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 
 
 public class Sentry : MonoBehaviour
@@ -30,35 +33,30 @@ public class Sentry : MonoBehaviour
     {
         if(sentryEnabled)
         {
-            initRotation = transform.rotation;
-            SeekPlayer();
-        }
-    }
+            int layerMask = 1 << 8;
+            int proximityCount = Physics.OverlapSphereNonAlloc(transform.position, seekRange, proximityArr, layerMask);
+            currentTarget = FindTarget(proximityCount);
 
-    private void SeekPlayer()
-    {
-        int layerMask = 1 << 8;
-        int proximityCount = Physics.OverlapSphereNonAlloc(transform.position, seekRange, proximityArr, layerMask);
-        currentTarget = FindTarget(proximityCount);
-
-        if(currentTarget != null)
-        {
-            // Seeking player
-            Quaternion targetDir = Quaternion.LookRotation(currentTarget.position - transform.position);
-            MoveHead(targetDir);
-            
-            if(targetDir == sentryHead.rotation)
+            if(currentTarget)
             {
-                Fire();
-                seekAmp = 5;
+                // Seeking player
+                Quaternion targetDir = Quaternion.LookRotation(currentTarget.position - transform.position);
+                MoveHead(targetDir);
+            
+                if(sentryHead.rotation == targetDir)
+                {
+                    Fire();
+                    seekAmp = 5;
+                }
             }
-        }
-        else
-        {
-            proximityArr = new Collider[2];
-            seekAmp = 1;
+            else
+            {
+                proximityArr = new Collider[2];
+                seekAmp = 1;
 
-            MoveHead(initRotation);
+                initRotation = transform.rotation;
+                MoveHead(initRotation);
+            }
         }
     }
 
@@ -70,10 +68,10 @@ public class Sentry : MonoBehaviour
         }
     }
 
-    private void MoveHead(Quaternion desiredRoation)
+    private void MoveHead(Quaternion desiredRotation)
     {
         float step = Time.deltaTime * seekRate * seekAmp;
-        sentryHead.rotation = Quaternion.RotateTowards(sentryHead.rotation, desiredRoation, step);
+        sentryHead.rotation = Quaternion.RotateTowards(sentryHead.rotation, desiredRotation, step);
     }
 
     // Find closest target to turret
@@ -115,6 +113,7 @@ public class Sentry : MonoBehaviour
         return closest;
     }
 
+#if UNITY_EDITOR
     private void OnDrawGizmosSelected() 
     {
         Color gizColor = Color.white;
@@ -125,4 +124,5 @@ public class Sentry : MonoBehaviour
         Handles.DrawSolidArc(transform.position, transform.up, transform.forward, seekAngle, seekRange);
         Handles.DrawSolidArc(transform.position, transform.up, transform.forward, -seekAngle, seekRange);
     }
+#endif
 }

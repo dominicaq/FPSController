@@ -90,10 +90,9 @@ public class PlayerForce : MonoBehaviour
     }
 
     private void OnDrawGizmosSelected()
-    { 
-        float gizmoRayLength = 0.1f;
+    {
         Gizmos.color = Color.yellow;
-        Gizmos.DrawLine(transform.position, transform.position + velocity * gizmoRayLength);
-        Gizmos.DrawWireSphere(transform.position + velocity * gizmoRayLength, 0.5f / 1.5f);
+        Gizmos.DrawLine(transform.position, transform.position + velocity * 0.1f);
+        Gizmos.DrawWireSphere(transform.position + velocity * 0.1f, 0.5f / 1.5f);
     }
 }
