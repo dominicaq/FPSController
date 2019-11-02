@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: EnemyBundle
+  m_EditorClassIdentifier: 
+  m_GroupName: EnemyBundle
+  m_Data:
+    m_SerializedData: []
+  m_GUID: 75d3e738b1ae3014b84ad75ff6c07b82
+  m_SerializeEntries:
+  - m_GUID: 78476d9141d0e4043b87c5bae3c77594
+    m_Address: Sentry
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 29eac97725743d94c8b6214ff9801683, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: b33752fc7974dae43bd13902e43be508, type: 2}
+    - {fileID: 11400000, guid: 35851ab0829786f4eb79ef4b256d26ec, type: 2}
