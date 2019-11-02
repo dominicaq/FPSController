@@ -11,7 +11,7 @@ public class JumpPad : MonoBehaviour
     // Audio
     private AudioSource audioData;
 
-    private void Awake() 
+    private void Start() 
     {
         audioData = GetComponent<AudioSource>();
     }

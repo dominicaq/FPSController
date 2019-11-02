@@ -1,12 +1,13 @@
 ﻿using UnityEngine;
 
+[RequireComponent(typeof(CharacterController))]
 public class PlayerForce : MonoBehaviour
 {
     [Header("Force Vector")]
     public Vector3 velocity = Vector3.zero;
 
     [Header("Force Conditions")]
-    [SerializeField] private bool enablevelocityForce = true;
+    [SerializeField] private bool enableVelocityForce = true;
     [SerializeField] private bool collidedWithWall = false;
 
     // Scripts
@@ -21,40 +22,35 @@ public class PlayerForce : MonoBehaviour
 
     private void LateUpdate()
     {
-        if(enablevelocityForce)
-        {   
-            PlayerImpulse();
+        if(enableVelocityForce)
+        {
+            float decelRate = 1;
+            if(collidedWithWall && !playerCC.isGrounded)
+                decelRate = 2.5f;
+
+            // Decelerate on ground or head bump
+            if(playerCC.isGrounded || playerController.HeadCheck())
+            {
+                decelRate = 5f;
+                velocity.y = 0;
+            }
+
+            velocity = Vector3.Lerp(velocity, Vector3.zero, decelRate * Time.deltaTime);
+            // Finalization
+            if(velocity.magnitude > 1 || velocity.magnitude < -1)
+            {
+                playerCC.Move(velocity * Time.deltaTime);
+            }
+            else if (playerCC.isGrounded)
+            {
+                velocity = Vector3.zero;
+                playerController.isFlying = false;
+                collidedWithWall = false;
+            }
         }
     }
 
-    private void PlayerImpulse()
-    {
-        float decelRate = 1;
-        if(collidedWithWall && !playerCC.isGrounded)
-            decelRate = 2.5f;
-
-        // Decelerate on ground or head bump
-        if(playerCC.isGrounded || playerController.HeadCheck())
-        {
-            decelRate = 5f;
-            velocity.y = 0;
-        }
-
-        velocity = Vector3.Lerp(velocity, Vector3.zero, decelRate * Time.deltaTime);
-        // Finalization
-        if(velocity.magnitude > 1 || velocity.magnitude < -1)
-        {
-            playerCC.Move(velocity * Time.deltaTime);
-        }
-        else if (playerCC.isGrounded)
-        {
-            velocity = Vector3.zero;
-            playerController.isFlying = false;
-            collidedWithWall = false;
-        }
-    }
-
-    // DON'T USE MOVEMENT FUNCTIONS INSIDE, STACKOVERFLOW ERROR WILL OCCUR
+    // Detect if we hit a wall
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
         // If player hits a wall while being launched, nullify velocity immediately
@@ -71,6 +67,7 @@ public class PlayerForce : MonoBehaviour
         }
     }
 
+    // Vector force
     public void AddForce(Vector3 dir)
     {
         playerController.isFlying = true;
@@ -80,6 +77,7 @@ public class PlayerForce : MonoBehaviour
         velocity -= Vector3.Reflect(dir, Vector3.zero);
     }    
 
+    // Y Axis force
     public void AddForce(float upwardForce)
     {
         playerController.isJumping = true;
@@ -87,10 +85,9 @@ public class PlayerForce : MonoBehaviour
     }
 
     private void OnDrawGizmosSelected()
-    { 
-        float gizmoRayLength = 0.1f;
+    {
         Gizmos.color = Color.yellow;
-        Gizmos.DrawLine(transform.position, transform.position + velocity * gizmoRayLength);
-        Gizmos.DrawWireSphere(transform.position + velocity * gizmoRayLength, 0.5f / 1.5f);
+        Gizmos.DrawLine(transform.position, transform.position + velocity * 0.1f);
+        Gizmos.DrawWireSphere(transform.position + velocity * 0.1f, 0.5f / 1.5f);
     }
 }

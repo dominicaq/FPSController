@@ -9,7 +9,7 @@ public class InteractWorld : MonoBehaviour
     private bool isCarrying = false;
     private bool isColliding = false;
     [SerializeField] private float interactArmLength = 2.0f;
-    [SerializeField] private float liftCapacity = 5;
+    [SerializeField] private float liftCapacity = 2;
     [SerializeField] [Range(1, 15)] private float moveRate = 1;
 
     [Header("Held Object")]
@@ -61,13 +61,25 @@ public class InteractWorld : MonoBehaviour
         if(heldObject && heldObjectRB)
         {
             isCarrying = true;
-
+            Vector3 boxSize = heldObjectCollider.bounds.size;
+            if (boxSize.y > 1)
+            {
+                boxSize.y += .87f;
+            }
+            
             // Holding
             Vector3 forwardVector = Vector3.forward * 1.75f;
             rotatedVector = transform.rotation * forwardVector;
 
-            if (Physics.Raycast(heldObject.position, Vector3.down) && rotatedVector.y <= -1.3f)
+            if (Physics.Raycast(heldObject.position, Vector3.down, boxSize.y) && rotatedVector.y <= -1.3f)
             {
+                if (playerCamera.IsLookingDown((80)))
+                {
+                    float signX = Mathf.Sign(rotatedVector.x);
+                    float signZ = Mathf.Sign(rotatedVector.z);
+                    rotatedVector.x = Mathf.Clamp(rotatedVector.x + 1.5f, 1.3f * signX, Mathf.Infinity);
+                    rotatedVector.z = Mathf.Clamp(rotatedVector.z + 1.5f, 1.3f * signZ, Mathf.Infinity);
+                }
                 rotatedVector.y = -1.3f;
             }
             
@@ -79,11 +91,6 @@ public class InteractWorld : MonoBehaviour
             heldObject.eulerAngles = desiredRot;
             
             NullifyRbForces();
-            Vector3 boxSize = heldObjectCollider.bounds.size;
-            if (boxSize.y > 1)
-            {
-                boxSize.y += .87f;
-            }
             
             isColliding = Physics.CheckBox(heldObject.position, boxSize / 2, heldObject.rotation, ignorePlayerMask);
             if (isColliding && isCarrying)
@@ -107,7 +114,7 @@ public class InteractWorld : MonoBehaviour
         {
             // Prevent grabbing sizes too big
             Transform hitObject = hit.transform;
-            float sizeCheck = hitObject.localScale.x + hitObject.localScale.y + hitObject.localScale.z;
+            float sizeCheck = hitObject.localScale.magnitude;
 
             if(hit.rigidbody && sizeCheck <= liftCapacity)
             {

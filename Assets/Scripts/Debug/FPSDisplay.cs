@@ -22,7 +22,7 @@ public class FPSDisplay : MonoBehaviour
  
 	void OnGUI()
 	{
-        if(enable)
+		if(enable)
         {
 		    int w = Screen.width, h = Screen.height;
 

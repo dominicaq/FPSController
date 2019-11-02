@@ -12,6 +12,8 @@ GameObject:
   - component: {fileID: 426765841801603234}
   - component: {fileID: 426765841801603233}
   - component: {fileID: 6683529326792256733}
+  - component: {fileID: 8846356068369080030}
+  - component: {fileID: 2286435692464657663}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -65,11 +67,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22e898fe7ac2d4948b57aa2d148ab22e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  velocity: {x: 0, y: 0, z: 0}
-  enableCrouchToggle: 0
   movementSpeed: 7
   crouchMovementSpeed: 2.8
-  ladderAngle: 5
+  worldGravity: -14
+  gravity: 0
+  jumpHeight: 5
+  maximumJumps: 2
   crouchHeight: 1.4
   crouchCenter: {x: 0, y: 0.25, z: 0}
   crouchDecelerateRate: 2
@@ -98,17 +101,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  jumpHeight: 45
-  enableMultiJump: 0
-  maximumJumps: 2
-  gravityForce: -14
-  gravity: -14
   slideRate: 1.5
-  isCrouching: 0
-  isJumping: 0
-  isFlying: 0
-  isClimbingLadder: 0
-  isSwimming: 0
 --- !u!114 &6683529326792256733
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -122,8 +115,35 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   velocity: {x: 0, y: 0, z: 0}
-  enablevelocityForce: 1
+  enableVelocityForce: 1
   collidedWithWall: 0
+--- !u!114 &8846356068369080030
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 426765841801603247}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cab8c9623b37fb345b2269db6b74f632, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ladderAngle: 5
+--- !u!114 &2286435692464657663
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 426765841801603247}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c82199d9f8d75940883f4c37d6098ef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ascendRate: 10
+  descendRate: 5
 --- !u!1 &426765842425269235
 GameObject:
   m_ObjectHideFlags: 0
@@ -224,7 +244,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7576aee99e6f8c142a21cdc792fa8b77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  p_FieldOfView: 90
+  fieldOfView: 90
   cameraHeight: 0.6
   lockCursor: 1
   mouseSensitivity: 5
@@ -258,11 +278,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 75d9188ad698cac44ba8b5786b4aff57, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isCarrying: 0
   interactArmLength: 2
-  liftCapacity: 5
-  moveRate: 1
-  isColliding: 0
+  liftCapacity: 2.5
+  moveRate: 15
   heldObject: {fileID: 0}
 --- !u!114 &6683529328003801285
 MonoBehaviour:
@@ -331,6 +349,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -410,6 +429,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -446,8 +466,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2acde6b624f9cb2448e44bc43c059f21, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  projectile: {fileID: 6217870630581406576, guid: 39c71a9b69454194ba2247314a07d6a1,
-    type: 3}
+  maxDistance: 1000
 --- !u!1 &6692029899224730776
 GameObject:
   m_ObjectHideFlags: 0
@@ -493,8 +512,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e6dd793759626734b99ac6bba44135c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  selectedItem: 0
-  playerInventory: 
+  itemIndex: 0
+  playerInventory: []
+  selectedItem: {fileID: 0}
 --- !u!1 &7015208638802507530
 GameObject:
   m_ObjectHideFlags: 0
@@ -550,6 +570,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
