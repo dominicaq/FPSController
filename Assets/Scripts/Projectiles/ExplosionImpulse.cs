@@ -1,68 +1,72 @@
 ﻿using System.Collections;
-
+using Controller;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-public class ExplosionImpulse : MonoBehaviour
+namespace Projectiles
 {
-    [Header("Properties")]
-    public float strength = 30;
-    public float explosionRadius = 5;
-    public float lingerDuration = 0.1f;
-    
-    private bool isLingering = true;
-    private Vector3 direction;
-    private PlayerForce forceModifier;
-    private SphereCollider myCollider;
-
-    // Audio
-    private AudioSource audioData;
-
-    private void Start() 
+    public class ExplosionImpulse : MonoBehaviour
     {
-        myCollider = GetComponent<SphereCollider>();
-        myCollider.radius = explosionRadius;
+        [Header("Properties")] 
+        public float strength = 30;
+        public float explosionRadius = 5;
+        public float lingerDuration = 0.1f;
 
-        audioData = GetComponent<AudioSource>();
-        audioData.Play(0);
+        private bool isLingering = true;
+        private Vector3 direction;
+        
+        private PlayerForce forceModifier;
+        private SphereCollider myCollider;
+        private AudioSource audioData;
 
-        // Linger long enough for sound to finish playing
-        StartCoroutine(Linger());
-        StartCoroutine(DestroyObject());
-    }
-
-    private void OnTriggerEnter(Collider hit)
-    {
-        if(isLingering)
+        private void Start()
         {
-            forceModifier = hit.GetComponent<PlayerForce>();
+            myCollider = GetComponent<SphereCollider>();
+            myCollider.radius = explosionRadius;
+
+            audioData = GetComponent<AudioSource>();
+            audioData.Play(0);
+
+            // Linger for explosion code
+            StartCoroutine(Linger());
             
-            // Direction of explosion
-            direction = transform.position - hit.transform.position;
-
-            // Finalize
-            if(forceModifier != null)
-                forceModifier.AddForce(direction * strength);
+            // Linger for sound
+            StartCoroutine(DestroyObject());
         }
-    }
 
-    IEnumerator DestroyObject()
-    {
-        yield return new WaitForSeconds(audioData.clip.length);
-        Addressables.ReleaseInstance(gameObject);
-    }
+        private void OnTriggerEnter(Collider hit)
+        {
+            if (isLingering)
+            {
+                forceModifier = hit.GetComponent<PlayerForce>();
 
-    IEnumerator Linger()
-    {
-        isLingering = true;
-        yield return new WaitForSeconds(lingerDuration);
-        isLingering = false;
-    }
+                // Direction of explosion
+                direction = transform.position - hit.transform.position;
 
-    void OnDrawGizmos()
-    {
-        // Display the explosion radius when selected
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, explosionRadius);
+                // Finalize
+                if (forceModifier != null)
+                    forceModifier.AddForce(direction * strength);
+            }
+        }
+
+        IEnumerator DestroyObject()
+        {
+            yield return new WaitForSeconds(audioData.clip.length);
+            Addressables.ReleaseInstance(gameObject);
+        }
+
+        IEnumerator Linger()
+        {
+            isLingering = true;
+            yield return new WaitForSeconds(lingerDuration);
+            isLingering = false;
+        }
+
+        void OnDrawGizmos()
+        {
+            // Display the explosion radius when selected
+            Gizmos.color = Color.red;
+            Gizmos.DrawSphere(transform.position, explosionRadius);
+        }
     }
 }
