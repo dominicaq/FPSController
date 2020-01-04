@@ -8,7 +8,8 @@ namespace Projectiles
     public class ExplosionImpulse : MonoBehaviour
     {
         [Header("Properties")] 
-        public float strength = 30;
+        public float strength = 15;
+        public float rbStrength = 500;
         public float explosionRadius = 5;
         public float lingerDuration = 0.1f;
 
@@ -33,19 +34,22 @@ namespace Projectiles
             // Linger for sound
             StartCoroutine(DestroyObject());
         }
-
+        
         private void OnTriggerEnter(Collider hit)
         {
             if (isLingering)
             {
-                forceModifier = hit.GetComponent<PlayerForce>();
-
                 // Direction of explosion
                 direction = transform.position - hit.transform.position;
-
-                // Finalize
-                if (forceModifier != null)
+                
+                // Add force to players and rigid bodies
+                forceModifier = hit.GetComponent<PlayerForce>();
+                if (forceModifier)
                     forceModifier.AddForce(direction * strength);
+
+                Rigidbody hitRb = hit.GetComponent<Rigidbody>();
+                if (hitRb)
+                    hitRb.AddForce(-direction * rbStrength);
             }
         }
 

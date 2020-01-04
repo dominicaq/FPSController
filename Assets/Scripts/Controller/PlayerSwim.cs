@@ -2,7 +2,7 @@
 
 namespace Controller
 {
-    // Causes crashing, don't use
+    // Incomplete
     [RequireComponent(typeof(PlayerController))]
     public class PlayerSwim : MonoBehaviour
     {
@@ -14,12 +14,15 @@ namespace Controller
         public float descendRate = 5;
 
         [Header("Components")] private PlayerController playerController;
-        private CharacterController controller;
+        private CharacterController charController;
 
         private void Start()
         {
             playerController = GetComponent<PlayerController>();
-            controller = GetComponent<CharacterController>();
+            charController = GetComponent<CharacterController>();
+
+            if (!playerController || !charController)
+                enabled = false;
         }
 
         // Early version of swimming
@@ -44,7 +47,7 @@ namespace Controller
                     buoyancy = 3;
             }
 
-            if (buoyancy < -1 && !controller.isGrounded)
+            if (buoyancy < -1 && !charController.isGrounded)
             {
                 buoyancy += -buoyancy * Time.deltaTime;
             }
@@ -61,14 +64,13 @@ namespace Controller
             swimVelocity = transform.rotation * swimVelocity;
             swimVelocity *= swimMovementSpeed;
             swimVelocity.y = buoyancy;
-            controller.Move(swimVelocity * Time.deltaTime);
+            charController.Move(swimVelocity * Time.deltaTime);
         }
 
         private bool HeadWaterCheck()
         {
             float rayLength = 0.6f;
-            if (Physics.SphereCast(transform.position, controller.radius, Vector3.up, out RaycastHit hitInfo,
-                rayLength))
+            if (Physics.SphereCast(transform.position, charController.radius, Vector3.up, out RaycastHit hitInfo, rayLength))
             {
                 //Debug.Log(hitInfo.collider.isTrigger);
             }
@@ -78,14 +80,15 @@ namespace Controller
 
         private void OnTriggerStay(Collider other)
         {
-            //if(other.CompareTag("Water"))
-            //playerController.isSwimming = true;
+            if (other.CompareTag("Water"))
+                playerController.isSwimming = true;
+
         }
 
         private void OnTriggerExit(Collider other)
         {
-            //if(other.CompareTag("Water") && !HeadWaterCheck() && playerController.isSwimming)
-            //playerController.isSwimming = false;
+            if (other.CompareTag("Water") && !HeadWaterCheck() && playerController.isSwimming)
+                playerController.isSwimming = false;
         }
     }
 }

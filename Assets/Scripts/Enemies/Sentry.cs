@@ -98,12 +98,12 @@ public class Sentry : MonoBehaviour
                     // If object is within bounds
                     if (incomingAngle <= seekAngle)
                     {
-                        float curDistance = Vector3.Distance(resultObj.position, transform.position);
+                        float currentDist = Vector3.Distance(resultObj.position, transform.position);
 
-                        if (curDistance < distance)
+                        if (currentDist < distance)
                         {
                             closest = resultObj;
-                            distance = curDistance;
+                            distance = currentDist;
                         }                        
                     }
                 }

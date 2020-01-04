@@ -4,17 +4,17 @@ The goal of this controller was to mimic how Valves character controller feels i
 Notable features:
 
 ## PlayerController
+- Can be affected by enviromental forces (Explosions, JumpPads, etc.) with PlayerForce
+- Pick up small rigid bodies (Similar to Half-life and Portal)
+- Move up and down triggers tagged as Ladder
 - Smooth crouching
-- Can walk up and down hills smoothly
-- If a slope is too steep the controller will slide down it
-- Double jumping can be increased to any number when enabled
-- Can be affected by forces, Ex: Explosion force, Jump Pads, etc.
-- Can move up and down triggers tagged as Ladder
-- Can swim in triggers tagged as Water, will drift slowly down if no input detected
+- Can walk up and any terrain smoothly
+- Can jump in air to a desired limit (1 by default)
 
-## Player Camera
-- Aim punch * Will be revised soon *
-- Camera wobble * Will be revised soon *
+## Incomplete or extremely buggy
+- Sliding down steep terrain
+- Can swim in triggers tagged as Water, will drift slowly down if no input detected (disabled by default)
 
 ### Future Goals
-- Network when Unity releases their new network API
+- Create a camera shake/ recoil system
+- Add networking support

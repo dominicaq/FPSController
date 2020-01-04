@@ -164,5 +164,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   strength: 15
+  rbStrength: 200
   explosionRadius: 2
-  activeDuration: 0.5
+  lingerDuration: 0.1

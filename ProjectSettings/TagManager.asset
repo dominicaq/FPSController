@@ -6,10 +6,9 @@ TagManager:
   tags:
   - Unit
   - Ladder
+  - Enemy
   - Water
-  - Wood
-  - Metal
-  - SoundManager
+  - Wind
   layers:
   - Default
   - TransparentFX
@@ -41,8 +40,8 @@ TagManager:
   - 
   - 
   - 
-  - 
-  - 
+  - ViewModel
+  - PostProcessingLayer
   m_SortingLayers:
   - name: Default
     uniqueID: 0

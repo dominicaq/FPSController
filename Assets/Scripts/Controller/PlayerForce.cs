@@ -1,15 +1,16 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace Controller
 {
     [RequireComponent(typeof(CharacterController))]
     public class PlayerForce : MonoBehaviour
     {
-        [Header("Force Vector")] public Vector3 velocity = Vector3.zero;
+        [Header("Force Vector")] 
+        public Vector3 velocity = Vector3.zero;
 
         [Header("Force Conditions")] [SerializeField]
         private bool enableVelocityForce = true;
-
         [SerializeField] private bool collidedWithWall = false;
 
         // Scripts
@@ -26,18 +27,19 @@ namespace Controller
         {
             if (enableVelocityForce)
             {
-                float decelRate = 1;
+                float decelerate = 1;
                 if (collidedWithWall && !playerCC.isGrounded)
-                    decelRate = 2.5f;
+                    decelerate = 2.5f;
 
                 // Decelerate on ground or head bump
                 if (playerCC.isGrounded || playerController.HeadCheck())
                 {
-                    decelRate = 5f;
+                    decelerate = 5f;
                     velocity.y = 0;
                 }
 
-                velocity = Vector3.Lerp(velocity, Vector3.zero, decelRate * Time.deltaTime);
+                velocity = Vector3.Lerp(velocity, Vector3.zero, decelerate * Time.deltaTime);
+                
                 // Finalization
                 if (velocity.magnitude > 1 || velocity.magnitude < -1)
                 {
@@ -55,14 +57,12 @@ namespace Controller
         // Detect if we hit a wall
         private void OnControllerColliderHit(ControllerColliderHit hit)
         {
-            // If player hits a wall while being launched, nullify velocity immediately
             float rayLength = 0.5f;
 
             // Sphere cast or ray cast and is flying
-            bool isValid = (Physics.SphereCast(transform.position, playerCC.radius / 1.5f, velocity,
-                                out RaycastHit hitInfo, rayLength) ||
-                            Physics.Raycast(transform.position, velocity)) &&
-                           playerController.isFlying;
+            bool isValid = (playerController.isFlying && 
+                            Physics.SphereCast(transform.position, playerCC.radius / 1.5f,velocity, out RaycastHit hitInfo, rayLength) ||
+                            Physics.Raycast(transform.position, velocity));
 
             if (isValid)
             {
@@ -78,6 +78,15 @@ namespace Controller
 
             playerController.gravity = 0;
             velocity -= Vector3.Reflect(dir, Vector3.zero);
+        }
+
+        public void AddForceNonCumulative(Vector3 dir)
+        {
+            playerController.isFlying = true;
+            collidedWithWall = false;
+
+            playerController.gravity = 0;
+            velocity = Vector3.Reflect(dir, Vector3.zero);
         }
 
         // Y Axis force

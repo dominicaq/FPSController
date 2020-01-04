@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Controller
 {
@@ -8,11 +9,11 @@ namespace Controller
     public class PlayerController : MonoBehaviour
     {
         [Header("Input")] 
-        [NonSerialized] public Vector3 velocity;
+        [NonSerialized] public Vector3 inputVelocity;
         [NonSerialized] public float horizontal;
         [NonSerialized] public float vertical;
 
-        [Header("Movement")] 
+        [Header("Movement Settings")] 
         public float movementSpeed = 7.0f;
         [SerializeField] private float crouchMovementSpeed = 2.8f;
 
@@ -28,37 +29,34 @@ namespace Controller
         private PlayerSwim playerSwim;
         private Transform playerCamera;
 
-        [Header("Jumping")] 
+        [Header("Jump Settings")] 
         [SerializeField] private float jumpHeight = 5f;
         [SerializeField] private int maximumJumps = 2;
-        private int jumpCounter = 0;
-        private bool canJumpInAir = false;
-
-        // Rework later
-        [Header("Crouching")] 
-        [SerializeField] private float crouchHeight = 1.2f;
-        [SerializeField] private Vector3 crouchCenter = new Vector3(0, 0.25f, 0);
-        [SerializeField] private float crouchDecelerateRate = 2.0f;
-        [SerializeField] private float crouchTransitionDuration = 1f;
-        [SerializeField] private AnimationCurve crouchTransitionCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
-        private bool isCurrentlyCrouching;
+        private int jumpCounter;
+        private bool canJumpInAir;
+        
+        [Header("Crouch Settings")] 
+        [SerializeField] private float crouchHeight = 1.4f;
+        [SerializeField] private float crouchTransitionDuration = 0.25f;
+        private float crouchDecelerateRate = 2.0f;
         private bool crouchOnLanding;
         private float crouchCamHeight;
-        private float initCamHeight;
 
-        [Header("Slope Sliding")] 
+        [Header("Slope Sliding")]
         [SerializeField] private float slideRate = 1.5f;
         private float currentSlideSpeed = 0.0f;
-        private Vector3 incomingVec;
+        private float timedDelay;
         private Vector3 slopeDirection;
+        private float slideDelay = 0.5f;
 
         [Header("Init Variables")] 
         private Vector3 initCenter;
         private float initMoveSpeed;
-        private float initJumpHeight;
         private float initPlayerHeight;
-
-        [Header("Conditions")] 
+        private float initCamHeight;
+        private Vector3 crouchCenter;
+        
+        [Header("Player Conditions")] 
         [NonSerialized] 
         public bool isClimbingLadder = false,
             isCrouching = false,
@@ -91,9 +89,9 @@ namespace Controller
             initCenter = characterController.center;
 
             crouchCamHeight = initPlayerHeight - crouchHeight;
+            crouchCenter.y = characterController.height * 0.125f;
             initCamHeight = playerCamera.localPosition.y;
             initMoveSpeed = movementSpeed;
-            initJumpHeight = jumpHeight;
         }
 
         private void PlayerInput()
@@ -106,15 +104,15 @@ namespace Controller
                 Jump();
             }
 
-            if (Input.GetButtonDown("Crouch") && !isCurrentlyCrouching)
+            if (Input.GetButtonDown("Crouch") && !isCrouching)
             {
                 Crouch();
-                crouchOnLanding = !characterController.isGrounded ? true : false;
+                crouchOnLanding = !characterController.isGrounded;
             }
-            else if (!Input.GetButton("Crouch") && isCrouching && !isCurrentlyCrouching && !enableCrouchToggle)
+            else if (!Input.GetButton("Crouch") && isCrouching && !enableCrouchToggle)
             {
                 Crouch();
-                crouchOnLanding = !characterController.isGrounded ? true : false;
+                crouchOnLanding = !characterController.isGrounded;
             }
 
             if (Input.GetButtonUp("Crouch"))
@@ -177,17 +175,17 @@ namespace Controller
         {
             // Gravity
             gravity += Time.deltaTime * worldGravity;
-            velocity = new Vector3(horizontal, 0, vertical);
+            inputVelocity = new Vector3(horizontal, 0, vertical);
 
             // Prevent excessive diagonal movement
-            if (velocity.sqrMagnitude > 1)
-                velocity = velocity.normalized;
+            if (inputVelocity.sqrMagnitude > 1)
+                inputVelocity = inputVelocity.normalized;
 
             // Finalization
-            velocity = transform.rotation * velocity;
-            velocity *= movementSpeed;
-            velocity.y = gravity;
-            characterController.Move(velocity * Time.deltaTime);
+            inputVelocity = transform.rotation * inputVelocity;
+            inputVelocity *= movementSpeed;
+            inputVelocity.y = gravity;
+            characterController.Move(inputVelocity * Time.deltaTime);
 
             if (characterController.isGrounded)
             {
@@ -247,14 +245,10 @@ namespace Controller
                 }
             }
         }
-
-        // I don't like this
+        
         private IEnumerator CrouchRoutine()
         {
-            isCurrentlyCrouching = true;
-
             float crouchParam = 0f;
-            float smoothCrouchParam = 0f;
 
             float crouchSpeed = 1f / crouchTransitionDuration;
             float currentHeight = characterController.height;
@@ -270,12 +264,11 @@ namespace Controller
             while (crouchParam < 1f)
             {
                 crouchParam += Time.deltaTime * crouchSpeed;
-                smoothCrouchParam = crouchTransitionCurve.Evaluate(crouchParam);
 
-                characterController.height = Mathf.Lerp(currentHeight, desiredHeight, smoothCrouchParam);
-                characterController.center = Vector3.Lerp(currentCenter, desiredCenter, smoothCrouchParam);
+                characterController.height = Mathf.Lerp(currentHeight, desiredHeight, crouchParam);
+                characterController.center = Vector3.Lerp(currentCenter, desiredCenter, crouchParam);
 
-                camPos.y = Mathf.Lerp(camCurrentHeight, camDesiredHeight, smoothCrouchParam);
+                camPos.y = Mathf.Lerp(camCurrentHeight, camDesiredHeight, crouchParam);
                 playerCamera.localPosition = camPos;
 
                 // Adjust player position for resize
@@ -288,17 +281,14 @@ namespace Controller
 
                     characterController.Move(Vector3.down * 10);
                 }
-
                 yield return null;
             }
-
-            isCurrentlyCrouching = false;
         }
 
         private IEnumerator AdjustSpeedRoutine(float rate, float newSpeed)
         {
             float elapsedTime = 0.0f;
-
+            
             while (elapsedTime < 1f)
             {
                 elapsedTime += Time.deltaTime * rate;
@@ -308,7 +298,7 @@ namespace Controller
             }
         }
 
-        // True if object is detected above head, false if not
+        // True if object is detected above head
         public bool HeadCheck()
         {
             float rayLength = isCrouching ? crouchCenter.y + 0.75f : .6f;
@@ -330,34 +320,41 @@ namespace Controller
             return false;
         }
 
+        // Buggy
         private void SlideOffSlope()
         {
             if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, 2f))
             {
-                incomingVec = hit.point - transform.position;
-                slopeDirection = Vector3.Reflect(incomingVec, hit.normal);
+                Vector3 incomingVec = hit.point - transform.position;
+                slopeDirection =  Vector3.Reflect(incomingVec, hit.normal);
             }
 
-            if (slopeDirection.y <= -0.1f && !isFlying && !isJumping)
+            if(slopeDirection.y <= -0.1f && !isFlying && !isJumping)
             {
                 currentSlideSpeed += Time.deltaTime * slideRate;
-
                 characterController.Move(Vector3.down * 5 * Time.deltaTime);
                 characterController.Move(slopeDirection * currentSlideSpeed * Time.deltaTime);
+                timedDelay = slideDelay;
 
-                enableJumping = false;
+                //enableJumping = false;
             }
-            else if (characterController.isGrounded || isFlying)
+            else
             {
+                timedDelay -= Time.deltaTime;
+                //enableJumping = true;
+            }
+
+            // Ensure all force is gone
+            if (timedDelay <= 0)
+            {
+                slopeDirection = Vector3.zero;
                 currentSlideSpeed = 0;
-                enableJumping = true;
             }
         }
 
         private void RotateBodyWithView()
         {
-            Vector3 bodyRot = playerCamera.eulerAngles;
-            bodyRot.x = 0f;
+            Vector3 bodyRot = new Vector3(0, playerCamera.eulerAngles.y, 0);
             transform.eulerAngles = bodyRot;
         }
 
