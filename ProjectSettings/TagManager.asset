@@ -19,9 +19,9 @@ TagManager:
   - 
   - 
   - Player
-  - Enemy
+  - IgnorePlayer
   - Unit
-  - 
+  - IgnoreUnit
   - 
   - 
   - 

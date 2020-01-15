@@ -71,7 +71,7 @@ namespace Controller
             enableCrouching = true,
             enableCrouchToggle = false;
 
-        // Gets componenets and sets base stats
+        // Gets components and sets base stats
         private void Start()
         {
             // Player Camera

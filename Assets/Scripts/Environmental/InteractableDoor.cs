@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class RBsfxLoader : MonoBehaviour
+public class InteractableDoor : MonoBehaviour
 {
     // Start is called before the first frame update
     void Start()
@@ -13,6 +13,6 @@ public class RBsfxLoader : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Physics.IgnoreLayerCollision(LayerMask.NameToLayer("Player"),LayerMask.NameToLayer("IgnorePlayer"), true);
+        
     }
 }

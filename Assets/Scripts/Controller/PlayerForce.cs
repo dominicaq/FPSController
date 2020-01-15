@@ -58,7 +58,7 @@ namespace Controller
         private void OnControllerColliderHit(ControllerColliderHit hit)
         {
             float rayLength = 0.5f;
-
+            
             // Sphere cast or ray cast and is flying
             bool isValid = (playerController.isFlying && 
                             Physics.SphereCast(transform.position, playerCC.radius / 1.5f,velocity, out RaycastHit hitInfo, rayLength) ||

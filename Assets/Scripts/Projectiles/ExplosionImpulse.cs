@@ -69,7 +69,7 @@ namespace Projectiles
         void OnDrawGizmos()
         {
             // Display the explosion radius when selected
-            Gizmos.color = Color.red;
+            Gizmos.color = new Color(1,0.5f,0, 0.5f);
             Gizmos.DrawSphere(transform.position, explosionRadius);
         }
     }

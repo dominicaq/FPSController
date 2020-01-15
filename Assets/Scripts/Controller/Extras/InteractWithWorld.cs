@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+
 public class InteractWithWorld : MonoBehaviour
 {
     [Header("Interact properties")] private bool isCarrying;
@@ -8,18 +9,21 @@ public class InteractWithWorld : MonoBehaviour
     [SerializeField] private float liftCapacity = 2;
     [SerializeField] [Range(1, 15)] private float moveRate = 1;
 
-    [Header("Held Object")] [SerializeField]
+    [Header("Held Object")]
     private Transform heldObject;
     private Vector3 rotatedVector = Vector3.zero;
     private Vector3 holdVector;
     private Rigidbody heldObjectRb;
 
-    [Header("Colliders")] private Collider heldObjectCollider;
+    [Header("Collider")] 
+    private Collider heldObjectCollider;
+    private Bounds heldObjectBounds;
     private Collider playerCollider;
+    private GameObject tempObject;
 
     [Header("Player")] private Camera selfCam;
     private PlayerCamera playerCamera;
-    private int ignorePlayerMask;
+    private int ignoreUnitMask;
 
     private void Start()
     {
@@ -27,7 +31,7 @@ public class InteractWithWorld : MonoBehaviour
         selfCam = transform.GetComponent<Camera>();
 
         playerCollider = transform.parent.GetComponent<Collider>();
-        ignorePlayerMask = Physics.DefaultRaycastLayers & ~LayerMask.GetMask("Player");
+        ignoreUnitMask = Physics.DefaultRaycastLayers & ~LayerMask.GetMask("IgnoreUnit");
     }
 
     private void Update()
@@ -67,11 +71,11 @@ public class InteractWithWorld : MonoBehaviour
             
             // Holding
             Vector3 forwardVector = Vector3.forward * 1.75f;
-            if (playerCamera.IsLookingDown(40))
+            if (playerCamera.IsLookingDown(17))
             {
-                forwardVector = Vector3.forward * 1.5f;
+                forwardVector = Vector3.forward * 2f;
                 rotatedVector = transform.parent.rotation * forwardVector;
-                rotatedVector.y = -1f;
+                rotatedVector.y = -.35f; // Was 1
             }
             else
             {
@@ -80,19 +84,22 @@ public class InteractWithWorld : MonoBehaviour
             
             NullifyRbForces();
             holdVector = transform.position + rotatedVector;
+            
+            heldObjectBounds = heldObjectCollider.bounds;
+            Vector3 calculatedPos = heldObject.position;
+            calculatedPos.y = heldObjectBounds.center.y;
 
-            Vector3 boxSize = heldObjectCollider.bounds.size;
-            isColliding = Physics.CheckBox(heldObject.position, boxSize / 2, heldObject.rotation, ignorePlayerMask, QueryTriggerInteraction.Ignore);
+            isColliding = Physics.CheckBox(calculatedPos, heldObjectBounds.size / 2, heldObject.rotation, ignoreUnitMask, QueryTriggerInteraction.Ignore);
             if (isColliding && isCarrying)
             {
-                heldObject.position = Vector3.MoveTowards(heldObject.transform.position, holdVector,
-                    Time.deltaTime * moveRate / 3);
+                heldObject.position = Vector3.MoveTowards(heldObject.position, holdVector,
+                    Time.smoothDeltaTime * moveRate / 4);
             }
 
             // Enforce distance between object
             Vector3 offset = heldObject.position - transform.position;
             float dist = offset.sqrMagnitude;
-            if (dist > interactArmLength + 1f)
+            if (dist > interactArmLength + 5f)
             {
                 Drop();
             }
@@ -112,7 +119,7 @@ public class InteractWithWorld : MonoBehaviour
             body.AddForce(transform.forward * throwStrength);
         }
     }
-    
+
     private void PickUp()
     {
         Ray interactRay = selfCam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
@@ -126,18 +133,16 @@ public class InteractWithWorld : MonoBehaviour
             {
                 if (hit.rigidbody.mass <= liftCapacity)
                 {
-                    // Ignore all collisions in object
+                    
                     heldObjectCollider = heldObject.GetComponent<Collider>();
-                    Physics.IgnoreCollision(heldObjectCollider, playerCollider);
+    
+                    // Ignore all collisions in object
                     foreach (Transform child in heldObject)
                     {
-                        Collider childCollider = child.GetComponent<Collider>();
-                        if (!childCollider)
-                            break;
-
-                        child.gameObject.layer = LayerMask.NameToLayer("Player");
-                        Physics.IgnoreCollision(childCollider, playerCollider);
+                        child.gameObject.layer = LayerMask.NameToLayer("IgnoreUnit");
                     }
+                    
+                    transform.GetChild(0).gameObject.SetActive(false);
                 }
             }
         }
@@ -145,17 +150,12 @@ public class InteractWithWorld : MonoBehaviour
 
     private void Drop()
     {
-        Physics.IgnoreCollision(heldObjectCollider, playerCollider, false);
         foreach (Transform child in heldObject)
         {
-            Collider childCollider = child.GetComponent<Collider>();
-            if (!childCollider)
-                break;
-
             child.gameObject.layer = LayerMask.NameToLayer("Default");
-            Physics.IgnoreCollision(childCollider, playerCollider, false);
         }
 
+        transform.GetChild(0).gameObject.SetActive(true);
         heldObject.gameObject.layer = 0;
         heldObjectRb.useGravity = true;
 
@@ -164,6 +164,7 @@ public class InteractWithWorld : MonoBehaviour
         heldObject = null;
 
         isCarrying = false;
+        transform.GetChild(0).gameObject.SetActive(true);
     }
 
     private void NullifyRbForces()
@@ -171,5 +172,18 @@ public class InteractWithWorld : MonoBehaviour
         heldObjectRb.angularVelocity = Vector3.zero;
         heldObjectRb.velocity = Vector3.zero;
         heldObjectRb.useGravity = false;
+    }
+    
+    void OnDrawGizmos()
+    {
+        // Draw a semitransparent blue cube at the transforms position
+        Gizmos.color = new Color(0, 1, 0.5f, 0.5f);
+
+        if (heldObjectCollider)
+        {
+            Vector3 tempPos = heldObject.position;
+            tempPos.y = heldObjectCollider.bounds.center.y;
+            Gizmos.DrawCube(tempPos, heldObjectCollider.bounds.size);
+        }
     }
 }

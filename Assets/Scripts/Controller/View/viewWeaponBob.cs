@@ -4,43 +4,71 @@ using UnityEngine;
 
 public class viewWeaponBob : MonoBehaviour
 {
-    [Header("Properties")]
-    // Bobbing
+    [Header("Bobbing")]
     public float smoothWalking = 0.3f;
-    public float bobDistance = 0.2f;
+    public float bobDistance = 0.1f;
     private float smoothWalkVelocity;
-    // Swaying
-    public float maxSway = 10f;
-    
-    private PlayerCamera cam;
+    private Vector3 currentPos;
+    private bool flip;
+
+    [Header("View Model")] 
+    public float swayIntensityX = 10;
+    public float swayIntensityY = 10;
+    public float swayTime = 5;
+    private Vector3 smoothSway;
+    private PlayerCamera myCamera;
     void Start()
     {
-        cam = GetComponent<PlayerCamera>();
+        currentPos = transform.localPosition;
+        myCamera = transform.parent.GetComponent<PlayerCamera>();
     }
     
     // Update is called once per frame
     void Update()
     {
-        Vector3 currentPos = transform.localPosition;
-        float horiz = Input.GetAxisRaw("Horizontal");
+        InventoryBob();
+        InventorySway();
+    }
+
+    private void InventoryBob()
+    {
         float vert = Input.GetAxisRaw("Vertical");
-        
-        if (vert != 0)
+        currentPos.z = Mathf.Clamp(currentPos.z, bobDistance * 0.1f, bobDistance);
+
+        if (vert != 0 && !flip)
         {
-            currentPos.z = Mathf.PingPong(-Time.time * 0.1f, bobDistance);
+            currentPos.z = Mathf.SmoothDamp(currentPos.z,bobDistance, ref smoothWalkVelocity, smoothWalking);
+            if (currentPos.z >= bobDistance * .9f)
+            {
+                flip = true;
+            }
         }
         else
         {
             currentPos.z = Mathf.SmoothDamp(currentPos.z,0, ref smoothWalkVelocity, smoothWalking);
+            if (currentPos.z <= bobDistance * 0.1f)
+            {
+                flip = false;
+            }
         }
-
-        ViewSway();
+        
         transform.localPosition = currentPos;
     }
-
-    private void ViewSway()
+    
+    private void InventorySway()
     {
-        float x = Input.GetAxis("Mouse X"),
-              y = Input.GetAxis("Mouse Y");
+        float inputX = Input.GetAxis("Mouse X"),
+              inputY = Input.GetAxis("Mouse Y");
+        
+        Quaternion swayX = Quaternion.AngleAxis(-swayIntensityX * inputX, Vector3.down);
+        Quaternion swayY = Quaternion.AngleAxis(swayIntensityY * inputY, Vector3.right);
+        Quaternion targetRot = swayX;
+
+        if (!myCamera.IsLookingUp(90) && !myCamera.IsLookingDown(90))
+        {
+            targetRot *= swayY;
+        }
+        
+        transform.localRotation = Quaternion.Lerp(transform.localRotation, targetRot, Time.deltaTime * swayTime);
     }
 }

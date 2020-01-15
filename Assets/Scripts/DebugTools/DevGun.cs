@@ -1,27 +1,30 @@
-﻿using Unity.Mathematics;
+﻿using System;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
 public class DevGun : MonoBehaviour
 {
     public float maxDistance = 1000f;
-    private CameraShake recoil;
-
+    private Camera cam;
     private void Start()
     {
-        recoil = transform.parent.parent.GetComponent<CameraShake>();
+        cam = transform.parent.parent.GetComponent<Camera>();
     }
     private void Update()
     {
         // Shoot
         if(Input.GetMouseButtonDown(0))
         {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            recoil.InduceAimPunch(5);
-            recoil.InduceStress(10);
-
-            if (Physics.Raycast(ray, out RaycastHit hit, maxDistance))
+            int mask = ~LayerMask.GetMask("Player");
+            if (Physics.Raycast(cam.transform.position, cam.transform.forward, out RaycastHit hit, maxDistance, mask))
                 Addressables.InstantiateAsync("ImpulseSphere", hit.point, quaternion.identity);
         }
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.blue;
+        Gizmos.DrawLine(cam.transform.position, cam.transform.forward * maxDistance);
     }
 }
