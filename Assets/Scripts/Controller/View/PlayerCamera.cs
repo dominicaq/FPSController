@@ -1,4 +1,5 @@
 ﻿using System;
+using Managers;
 using UnityEngine;
 
 // Note: Nothing but camera modifiers and input should mess with rotation
@@ -9,7 +10,6 @@ public class PlayerCamera : MonoBehaviour
     // Camera Settings
     [Header("Properties")]  
     [Range(75, 90)] public float fieldOfView = 90;
-    public bool lockCursor = true;
 
     [Header("Camera Axis")] 
     [NonSerialized]
@@ -26,23 +26,22 @@ public class PlayerCamera : MonoBehaviour
     private void Start()
     {
         // Camera properties
-        cameraComponent = transform.GetComponent<Camera>();
-
-        if (lockCursor)
-        {
-            Cursor.visible = false;
-            Cursor.lockState = CursorLockMode.Locked;
-        }
+        cameraComponent = GetComponent<Camera>();
     }
 
-    private void Update()
+    private void CameraInput()
     {
-        // FOV
-        cameraComponent.fieldOfView = fieldOfView;
-
-        // Input
         yaw += mouseSensitivity * Input.GetAxis("Mouse X");
         pitch -= mouseSensitivity * Input.GetAxis("Mouse Y");
+    }
+    
+    private void Update()
+    {
+        if(!GameState.isPaused)
+            CameraInput();
+        
+        // FOV
+        cameraComponent.fieldOfView = fieldOfView;
         pitch = Mathf.Clamp(pitch, -90, 90);
 
         Vector3 inputDir = new Vector3(pitch, yaw, roll);

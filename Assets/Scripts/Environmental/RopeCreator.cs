@@ -14,6 +14,7 @@ public class RopeCreator : MonoBehaviour
     [Range(2, 100)]
     public int numPoints = 10;
     public float radius = 0.5f;
+    public float gizmoSize = 0.5f;
     private LineRenderer lineRenderer;
 
     [Header("Properties")] 
@@ -28,6 +29,7 @@ public class RopeCreator : MonoBehaviour
         
         GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         sphere.GetComponent<MeshRenderer>().enabled = false;
+        sphere.layer = LayerMask.NameToLayer("Ignore Player");
         Rigidbody rb = sphere.AddComponent<Rigidbody>();
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         rb.freezeRotation = true;
@@ -88,8 +90,8 @@ public class RopeCreator : MonoBehaviour
         Vector3 anchor2 = transform.parent.GetChild(1).position;
 
         Gizmos.color = Color.green;
-        Gizmos.DrawCube(anchor1, Vector3.one * (radius * 1.1f));
-        Gizmos.DrawCube(anchor2, Vector3.one * (radius * 1.1f));
+        Gizmos.DrawCube(anchor1, Vector3.one * gizmoSize);
+        Gizmos.DrawCube(anchor2, Vector3.one * gizmoSize);
         Debug.DrawLine(anchor1, anchor2);
     }
 }

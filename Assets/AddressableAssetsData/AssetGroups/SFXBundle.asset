@@ -27,10 +27,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels:
     - SFXimpactWood
-  - m_GUID: 980cef727ac9c994a9eda15ce7be6926
-    m_Address: jumppad
-    m_ReadOnly: 0
-    m_SerializedLabels: []
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 29eac97725743d94c8b6214ff9801683, type: 2}
   m_SchemaSet:

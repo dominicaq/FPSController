@@ -13,6 +13,6 @@ public class RBsfxLoader : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Physics.IgnoreLayerCollision(LayerMask.NameToLayer("Player"),LayerMask.NameToLayer("IgnorePlayer"), true);
+        
     }
 }

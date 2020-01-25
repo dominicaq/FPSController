@@ -19,9 +19,8 @@ TagManager:
   - 
   - 
   - Player
-  - IgnorePlayer
+  - Interactable
   - Unit
-  - IgnoreUnit
   - 
   - 
   - 
@@ -40,6 +39,7 @@ TagManager:
   - 
   - 
   - 
+  - Ignore Player
   - ViewModel
   - PostProcessingLayer
   m_SortingLayers:

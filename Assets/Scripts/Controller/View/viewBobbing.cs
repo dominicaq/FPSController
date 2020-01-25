@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class viewBobbing : MonoBehaviour
 {
-    [Header("Properties")]
+    [Header("Camera Sway")]
     public float smooth = 0.3f;
     public float angle = 1;
     private float smoothVelocity;

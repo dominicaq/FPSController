@@ -1,18 +1,14 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System;
 using UnityEngine;
 
-public class InteractableDoor : MonoBehaviour
+public class InteractableDoor : PlayerHandyMan
 {
-    // Start is called before the first frame update
-    void Start()
+    public bool isOpen = false;
+    public Animator doorAnim;
+    
+    public override void OnInteract()
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        isOpen = !isOpen;
+        doorAnim.SetBool("open", isOpen);
     }
 }

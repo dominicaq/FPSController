@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Controller;
 using UnityEngine;
 
 public class viewWeaponBob : MonoBehaviour
@@ -10,17 +11,22 @@ public class viewWeaponBob : MonoBehaviour
     private float smoothWalkVelocity;
     private Vector3 currentPos;
     private bool flip;
+    private Transform movingObject;
 
     [Header("View Model")] 
     public float swayIntensityX = 10;
     public float swayIntensityY = 10;
     public float swayTime = 5;
     private Vector3 smoothSway;
+
+    private PlayerController controller;
     private PlayerCamera myCamera;
     void Start()
     {
-        currentPos = transform.localPosition;
-        myCamera = transform.parent.GetComponent<PlayerCamera>();
+        movingObject = transform.GetChild(0);
+        currentPos = movingObject.localPosition;
+        controller = transform.parent.GetComponent<PlayerController>();
+        myCamera = transform.GetComponent<PlayerCamera>();
     }
     
     // Update is called once per frame
@@ -34,6 +40,11 @@ public class viewWeaponBob : MonoBehaviour
     {
         float vert = Input.GetAxisRaw("Vertical");
         currentPos.z = Mathf.Clamp(currentPos.z, bobDistance * 0.1f, bobDistance);
+
+        if (controller.isCrouching)
+        {
+            smoothWalkVelocity = smoothWalkVelocity / 1.2f;
+        }
 
         if (vert != 0 && !flip)
         {
@@ -52,13 +63,15 @@ public class viewWeaponBob : MonoBehaviour
             }
         }
         
-        transform.localPosition = currentPos;
+        movingObject.localPosition = currentPos;
     }
     
     private void InventorySway()
     {
         float inputX = Input.GetAxis("Mouse X"),
               inputY = Input.GetAxis("Mouse Y");
+        
+        float currentSwayTime = controller.isCrouching ? swayTime / 2f: swayTime;
         
         Quaternion swayX = Quaternion.AngleAxis(-swayIntensityX * inputX, Vector3.down);
         Quaternion swayY = Quaternion.AngleAxis(swayIntensityY * inputY, Vector3.right);
@@ -69,6 +82,6 @@ public class viewWeaponBob : MonoBehaviour
             targetRot *= swayY;
         }
         
-        transform.localRotation = Quaternion.Lerp(transform.localRotation, targetRot, Time.deltaTime * swayTime);
+        movingObject.localRotation = Quaternion.Lerp(movingObject.localRotation, targetRot, Time.deltaTime * currentSwayTime);
     }
 }

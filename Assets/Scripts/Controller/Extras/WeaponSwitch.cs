@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Managers;
+using UnityEngine;
 
 public class WeaponSwitch : MonoBehaviour
 {
@@ -36,25 +37,28 @@ public class WeaponSwitch : MonoBehaviour
 
     void Update()
     {
-        int previousItem = itemIndex;
-        // Input
-        if (Input.GetAxis("Mouse ScrollWheel") > 0f ) // forward
+        if (!GameState.isPaused)
         {
-            if(itemIndex >= playerInventory.Length-1)
-                itemIndex = 0;
-            else
-                itemIndex++;
-        }
-        else if (Input.GetAxis("Mouse ScrollWheel") < 0f ) // backward
-        {
-            if (itemIndex <= 0)
-                itemIndex = playerInventory.Length-1;
-            else
-                itemIndex--;
-        }
+            int previousItem = itemIndex;
+            // Input
+            if (Input.GetAxis("Mouse ScrollWheel") > 0f ) // forward
+            {
+                if(itemIndex >= playerInventory.Length-1)
+                    itemIndex = 0;
+                else
+                    itemIndex++;
+            }
+            else if (Input.GetAxis("Mouse ScrollWheel") < 0f ) // backward
+            {
+                if (itemIndex <= 0)
+                    itemIndex = playerInventory.Length-1;
+                else
+                    itemIndex--;
+            }
 
-        if(previousItem != itemIndex)
-            SelectWeapon();
+            if(previousItem != itemIndex)
+                SelectWeapon();
+        }
     }
 
     void SelectWeapon()

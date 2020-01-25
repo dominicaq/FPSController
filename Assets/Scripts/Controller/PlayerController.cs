@@ -1,34 +1,40 @@
 ﻿using System;
 using System.Collections;
 using UnityEngine;
-using UnityEngine.UIElements;
+using Managers;
 
 namespace Controller
 {
     [RequireComponent(typeof(CharacterController))]
     public class PlayerController : MonoBehaviour
     {
-        [Header("Input")] 
-        [NonSerialized] public Vector3 inputVelocity;
-        [NonSerialized] public float horizontal;
-        [NonSerialized] public float vertical;
-
-        [Header("Movement Settings")] 
-        public float movementSpeed = 7.0f;
-        [SerializeField] private float crouchMovementSpeed = 2.8f;
-
-        [Header("Gravity")] 
-        [SerializeField] private float worldGravity = Physics.gravity.y;
-        public float gravity = 0;
-
+        #region Components
+        
         [Header("Components")] 
-        [NonSerialized] public CharacterController characterController;
+        public CharacterController characterController;
         [NonSerialized] public PlayerCamera cameraProperties;
         private PlayerLadder playerLadder;
         private PlayerForce forceModifier;
         private PlayerSwim playerSwim;
         private Transform playerCamera;
+        
+        #endregion
+        
+        [Header("Input")] 
+        [NonSerialized] public Vector3 inputVelocity;
+        [NonSerialized] public float horizontal;
+        [NonSerialized] public float vertical;
 
+        [Header("Gravity")] 
+        [SerializeField] private float worldGravity = Physics.gravity.y;
+        public float gravity = 0;
+
+        #region Settings
+
+        [Header("MoveSpeed Settings")] 
+        public float movementSpeed = 7.0f;
+        [SerializeField] private float crouchMovementSpeed = 2.8f;
+        
         [Header("Jump Settings")] 
         [SerializeField] private float jumpHeight = 5f;
         [SerializeField] private int maximumJumps = 2;
@@ -42,6 +48,8 @@ namespace Controller
         private bool crouchOnLanding;
         private float crouchCamHeight;
 
+        #endregion
+        
         [Header("Slope Sliding")]
         [SerializeField] private float slideRate = 1.5f;
         private float currentSlideSpeed = 0.0f;
@@ -55,8 +63,10 @@ namespace Controller
         private float initPlayerHeight;
         private float initCamHeight;
         private Vector3 crouchCenter;
+
+        #region Conditions
         
-        [Header("Player Conditions")] 
+        [Header("Player Conditions")]
         [NonSerialized] 
         public bool isClimbingLadder = false,
             isCrouching = false,
@@ -64,6 +74,8 @@ namespace Controller
             isFlying = false,
             isSwimming = false;
 
+        #endregion
+        
         [Header("Enable/Disable")] 
         [NonSerialized]
         public bool enableMultiJump = true,
@@ -79,11 +91,11 @@ namespace Controller
             cameraProperties = playerCamera.GetComponent<PlayerCamera>();
 
             // Get components
-            characterController = GetComponent<CharacterController>();
+            //characterController = GetComponent<CharacterController>();
             forceModifier = GetComponent<PlayerForce>();
-            playerSwim = GetComponent<PlayerSwim>();
             playerLadder = GetComponent<PlayerLadder>();
-
+            playerSwim = GetComponent<PlayerSwim>();
+            
             // Init Variables
             initPlayerHeight = characterController.height;
             initCenter = characterController.center;
@@ -123,7 +135,11 @@ namespace Controller
 
         private void Update()
         {
-            PlayerInput();
+            if (!GameState.isPaused)
+            {
+                PlayerInput();
+            }
+            
             PlayerMisc();
         }
 
@@ -139,7 +155,7 @@ namespace Controller
             }
             else
             {
-                enableJumping = isCrouching ? false : true;
+                enableJumping = !isCrouching;
                 PlayerVelocity();
                 SlideOffSlope();
             }
@@ -210,8 +226,7 @@ namespace Controller
                 jumpCounter += 1;
                 canJumpInAir = false;
             }
-
-            // Multi jump
+            
             if (isJumping && maximumJumps != jumpCounter)
             {
                 jumpCounter += 1;
@@ -303,7 +318,7 @@ namespace Controller
         {
             float rayLength = isCrouching ? crouchCenter.y + 0.75f : .6f;
             return Physics.SphereCast(transform.position, characterController.radius, Vector3.up,
-                out RaycastHit hitInfo, rayLength);
+                out RaycastHit hitInfo, rayLength, ~LayerMask.GetMask("Ignore Player"));
         }
 
         private bool IsOnSlope()
@@ -320,7 +335,7 @@ namespace Controller
             return false;
         }
 
-        // Buggy
+        // Needs revisiting
         private void SlideOffSlope()
         {
             if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, 2f))
@@ -357,8 +372,7 @@ namespace Controller
             Vector3 bodyRot = new Vector3(0, playerCamera.eulerAngles.y, 0);
             transform.eulerAngles = bodyRot;
         }
-
-        // Debugging
+        
         private void OnDrawGizmosSelected()
         {
             Gizmos.color = Color.blue;
