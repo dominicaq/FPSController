@@ -8,11 +8,11 @@ Notable features:
 - Pick up small rigid bodies (Similar to Half-life and Portal)
 - Move up and down triggers tagged as Ladder
 - Smooth crouching
+- Sliding down steep terrain
 - Can walk up and any terrain smoothly
 - Can jump in air to a desired limit (1 by default)
 
 ## Incomplete or extremely buggy
-- Sliding down steep terrain
 - Can swim in triggers tagged as Water, will drift slowly down if no input detected (disabled by default)
 
 ### Future Goals
