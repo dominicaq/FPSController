@@ -34,6 +34,7 @@ public class RopeCreator : MonoBehaviour
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         rb.freezeRotation = true;
         pointPrefab = sphere.transform;
+        Destroy(sphere);
     }
 
     void Start()
@@ -53,6 +54,7 @@ public class RopeCreator : MonoBehaviour
         points = new Transform[numPoints];
         for (int i = 0; i < numPoints; i++)
         {
+            pointPrefab.name = "Sphere" + i;
             points[i] = Instantiate(pointPrefab, transform);
             float p = i / (numPoints - 1f);
             points[i].position = Vector3.Lerp(startPoint.position, endPoint.position, p);

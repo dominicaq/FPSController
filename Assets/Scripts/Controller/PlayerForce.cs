@@ -80,15 +80,6 @@ namespace Controller
             velocity -= Vector3.Reflect(dir, Vector3.zero);
         }
 
-        public void AddForceNonCumulative(Vector3 dir)
-        {
-            playerController.isFlying = true;
-            collidedWithWall = false;
-
-            playerController.gravity = 0;
-            velocity = Vector3.Reflect(dir, Vector3.zero);
-        }
-
         // Y Axis force
         public void AddForce(float upwardForce)
         {

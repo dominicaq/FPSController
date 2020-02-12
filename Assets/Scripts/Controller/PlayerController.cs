@@ -31,7 +31,7 @@ namespace Controller
 
         #region Settings
 
-        [Header("MoveSpeed Settings")] 
+        [Header("Movement Speed Settings")] 
         public float movementSpeed = 7.0f;
         [SerializeField] private float crouchMovementSpeed = 2.8f;
         
@@ -39,8 +39,7 @@ namespace Controller
         [SerializeField] private float jumpHeight = 5f;
         [SerializeField] private int maximumJumps = 2;
         private int jumpCounter;
-        private bool canJumpInAir;
-        
+
         [Header("Crouch Settings")] 
         [SerializeField] private float crouchHeight = 1.4f;
         [SerializeField] private float crouchTransitionDuration = 0.25f;
@@ -48,15 +47,12 @@ namespace Controller
         private bool crouchOnLanding;
         private float crouchCamHeight;
 
+        [Header("Slope Sliding")]
+        [SerializeField] private float slideRate = 0.1f;
+        private float currentSlideSpeed = 0.0f;
+        
         #endregion
         
-        [Header("Slope Sliding")]
-        [SerializeField] private float slideRate = 1.5f;
-        private float currentSlideSpeed = 0.0f;
-        private float timedDelay;
-        private Vector3 slopeDirection;
-        private float slideDelay = 0.5f;
-
         [Header("Init Variables")] 
         private Vector3 initCenter;
         private float initMoveSpeed;
@@ -143,6 +139,7 @@ namespace Controller
             PlayerMisc();
         }
 
+        // Movement functions
         private void LateUpdate()
         {
             if (isClimbingLadder)
@@ -157,7 +154,7 @@ namespace Controller
             {
                 enableJumping = !isCrouching;
                 PlayerVelocity();
-                SlideOffSlope();
+                SlopeSliding();
             }
 
             RotateBodyWithView();
@@ -185,11 +182,9 @@ namespace Controller
                 movementSpeed = initMoveSpeed;
             }
         }
-
-        // Main movement function
+        
         private void PlayerVelocity()
         {
-            // Gravity
             gravity += Time.deltaTime * worldGravity;
             inputVelocity = new Vector3(horizontal, 0, vertical);
 
@@ -205,26 +200,28 @@ namespace Controller
 
             if (characterController.isGrounded)
             {
-                canJumpInAir = true;
                 isJumping = false;
                 jumpCounter = 0;
                 gravity = 0;
             }
 
-            if (IsOnSlope())
+            // Downward force on unevenground
+            if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, 1.5f))
             {
-                float slopeStep = Time.deltaTime * 5;
-                characterController.Move(Vector3.down * slopeStep);
+                if (hit.normal != Vector3.up && !isJumping && !isFlying)
+                {
+                    float slopeStep = Time.deltaTime * 5;
+                    characterController.Move(Vector3.down * slopeStep);
+                }
             }
         }
 
         private void Jump()
         {
             // Remove a jump if player is in air
-            if (!characterController.isGrounded && !isJumping && canJumpInAir)
+            if (!characterController.isGrounded && !isJumping)
             {
                 jumpCounter += 1;
-                canJumpInAir = false;
             }
             
             if (isJumping && maximumJumps != jumpCounter)
@@ -248,7 +245,7 @@ namespace Controller
                     StartCoroutine(CrouchRoutine());
 
                     if (!isFlying && !isJumping)
-                        StartCoroutine(AdjustSpeedRoutine(crouchDecelerateRate, crouchMovementSpeed));
+                        StartCoroutine(AdjustMoveSpeed(crouchDecelerateRate, crouchMovementSpeed));
 
                     isCrouching = true;
                 }
@@ -300,7 +297,7 @@ namespace Controller
             }
         }
 
-        private IEnumerator AdjustSpeedRoutine(float rate, float newSpeed)
+        private IEnumerator AdjustMoveSpeed(float rate, float newSpeed)
         {
             float elapsedTime = 0.0f;
             
@@ -321,49 +318,29 @@ namespace Controller
                 out RaycastHit hitInfo, rayLength, ~LayerMask.GetMask("Ignore Player"));
         }
 
-        private bool IsOnSlope()
+        private void SlopeSliding()
         {
-            if (isJumping)
-                return false;
-
-            if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, 1.5f))
+            if (characterController.isGrounded && !isFlying)
             {
-                if (hit.normal != Vector3.up)
-                    return true;
-            }
-
-            return false;
-        }
-
-        // Needs revisiting
-        private void SlideOffSlope()
-        {
-            if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, 2f))
-            {
-                Vector3 incomingVec = hit.point - transform.position;
-                slopeDirection =  Vector3.Reflect(incomingVec, hit.normal);
-            }
-
-            if(slopeDirection.y <= -0.1f && !isFlying && !isJumping)
-            {
-                currentSlideSpeed += Time.deltaTime * slideRate;
-                characterController.Move(Vector3.down * 5 * Time.deltaTime);
-                characterController.Move(slopeDirection * currentSlideSpeed * Time.deltaTime);
-                timedDelay = slideDelay;
-
-                //enableJumping = false;
-            }
-            else
-            {
-                timedDelay -= Time.deltaTime;
-                //enableJumping = true;
-            }
-
-            // Ensure all force is gone
-            if (timedDelay <= 0)
-            {
-                slopeDirection = Vector3.zero;
-                currentSlideSpeed = 0;
+                Vector3 slopeDirection = Vector3.zero;
+            
+                if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, characterController.height, ~0, QueryTriggerInteraction.Ignore))
+                {
+                    Vector3 temp = Vector3.Cross(hit.normal, hit.point - transform.position);
+                    slopeDirection = Vector3.Cross(temp, hit.normal);
+                }
+            
+                if(slopeDirection.y <= -0.45f)
+                {
+                    currentSlideSpeed += Time.deltaTime * slideRate;
+                    characterController.Move(slopeDirection.normalized * currentSlideSpeed);
+                    enableJumping = false;
+                }
+                else
+                {
+                    currentSlideSpeed = 0;
+                    enableJumping = true;
+                }
             }
         }
 
@@ -371,13 +348,6 @@ namespace Controller
         {
             Vector3 bodyRot = new Vector3(0, playerCamera.eulerAngles.y, 0);
             transform.eulerAngles = bodyRot;
-        }
-        
-        private void OnDrawGizmosSelected()
-        {
-            Gizmos.color = Color.blue;
-            float rayLength = isCrouching ? crouchCenter.y + 0.75f : .6f;
-            Gizmos.DrawWireSphere(transform.position + Vector3.up * rayLength, .5f);
         }
     }
 }

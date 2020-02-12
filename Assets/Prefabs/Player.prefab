@@ -157,16 +157,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22e898fe7ac2d4948b57aa2d148ab22e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  movementSpeed: 7
-  crouchMovementSpeed: 2.8
+  characterController: {fileID: 6421424318085215671}
   worldGravity: -14
   gravity: 0
-  characterController: {fileID: 6421424318085215671}
+  movementSpeed: 7
+  crouchMovementSpeed: 2.8
   jumpHeight: 5
-  maximumJumps: 2
+  maximumJumps: 1
   crouchHeight: 1.4
-  crouchTransitionDuration: 0.25
-  slideRate: 1.5
+  crouchTransitionDuration: 0.1
+  slideRate: 0.1
 --- !u!114 &6421424318085215669
 MonoBehaviour:
   m_ObjectHideFlags: 0
