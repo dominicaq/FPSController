@@ -6,38 +6,30 @@ namespace Controller
     public class PlayerLadder : MonoBehaviour
     {
         [Header("Properties")] 
-        [SerializeField] [Range(0, 90)]
-        private float ladderAngle = 5.0f;
+        [SerializeField] [Range(-90, 90)]
+        private float ladderAngle = 15.0f;
 
         [Header("Input")] 
         private float horizontal;
         private float vertical;
-
-        [Header("Components")] private PlayerController playerController;
-        private CharacterController controller;
+        
+        private PlayerController playerController;
 
         private void Start()
         {
             playerController = GetComponent<PlayerController>();
-            controller = GetComponent<CharacterController>();
         }
 
-        private void Update()
-        {
-            if (playerController.isClimbingLadder)
-            {
-                horizontal = playerController.horizontal;
-                vertical = playerController.vertical;
-            }
-        }
-
+        /// <summary> Moves player up and down y axis </summary>
         public void LadderVelocity()
         {
+            horizontal = Input.GetAxis("Horizontal");
+            vertical = Input.GetAxis("Vertical");
+            
             playerController.gravity = 0;
-            playerController.enableJumping = false;
 
             Vector3 ladderVelocity;
-            if (!controller.isGrounded)
+            if (!playerController.characterController.isGrounded)
             {
                 ladderVelocity = new Vector3(horizontal, vertical, 0);
             }
@@ -49,11 +41,10 @@ namespace Controller
             if (playerController.cameraProperties.IsLookingDown(ladderAngle))
                 ladderVelocity.y = -vertical;
 
-            float moveRate = Mathf.Abs(playerController.cameraProperties.GetPitch()) * 0.1f;
-            ladderVelocity *= moveRate;
-
+            float moveRate =  Mathf.Clamp(Mathf.Abs(playerController.cameraProperties.GetPitch()), 0, 2);
+            ladderVelocity *= moveRate * 2;
             Vector3 ladderDirection = transform.rotation * ladderVelocity;
-            controller.Move(ladderDirection * Time.deltaTime);
+            playerController.characterController.Move(ladderDirection * Time.deltaTime);
         }
 
         private void OnTriggerStay(Collider other)

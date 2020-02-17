@@ -1,38 +1,29 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Controller
 {
-    [RequireComponent(typeof(CharacterController))]
+    [RequireComponent(typeof(PlayerController))]
     public class PlayerForce : MonoBehaviour
     {
-        [Header("Force Vector")] 
         public Vector3 velocity = Vector3.zero;
-
-        [Header("Force Conditions")] [SerializeField]
-        private bool enableVelocityForce = true;
-        [SerializeField] private bool collidedWithWall = false;
-
-        // Scripts
-        private CharacterController playerCC;
+        private bool collidedWithWall;
         private PlayerController playerController;
 
-        private void Awake()
+        private void Start()
         {
-            playerCC = GetComponent<CharacterController>();
             playerController = GetComponent<PlayerController>();
         }
 
         private void LateUpdate()
         {
-            if (enableVelocityForce)
+            if (velocity != Vector3.zero)
             {
                 float decelerate = 1;
-                if (collidedWithWall && !playerCC.isGrounded)
+                if (collidedWithWall && !playerController.characterController.isGrounded)
                     decelerate = 2.5f;
 
                 // Decelerate on ground or head bump
-                if (playerCC.isGrounded || playerController.HeadCheck())
+                if (playerController.characterController.isGrounded || playerController.HeadCheck())
                 {
                     decelerate = 5f;
                     velocity.y = 0;
@@ -40,12 +31,11 @@ namespace Controller
 
                 velocity = Vector3.Lerp(velocity, Vector3.zero, decelerate * Time.deltaTime);
                 
-                // Finalization
                 if (velocity.magnitude > 1 || velocity.magnitude < -1)
                 {
-                    playerCC.Move(velocity * Time.deltaTime);
+                    playerController.characterController.Move(velocity * Time.deltaTime);
                 }
-                else if (playerCC.isGrounded)
+                else if (playerController.characterController.isGrounded)
                 {
                     velocity = Vector3.zero;
                     playerController.isFlying = false;
@@ -61,7 +51,7 @@ namespace Controller
             
             // Sphere cast or ray cast and is flying
             bool isValid = (playerController.isFlying && 
-                            Physics.SphereCast(transform.position, playerCC.radius / 1.5f,velocity, out RaycastHit hitInfo, rayLength) ||
+                            Physics.SphereCast(transform.position, playerController.characterController.radius / 1.5f,velocity, out RaycastHit hitInfo, rayLength) ||
                             Physics.Raycast(transform.position, velocity));
 
             if (isValid)
@@ -69,8 +59,9 @@ namespace Controller
                 collidedWithWall = true;
             }
         }
-
-        // Vector force
+        
+        /// <summary> Pushes player in given direction </summary>
+        /// <param name="dir"></param>
         public void AddForce(Vector3 dir)
         {
             playerController.isFlying = true;
@@ -79,9 +70,10 @@ namespace Controller
             playerController.gravity = 0;
             velocity -= Vector3.Reflect(dir, Vector3.zero);
         }
-
-        // Y Axis force
-        public void AddForce(float upwardForce)
+        
+        /// <summary> Makes playerController.isJumping true when called </summary>
+        /// <param name="upwardForce"></param>
+        public void AddYForce(float upwardForce)
         {
             playerController.isJumping = true;
             playerController.gravity = upwardForce;

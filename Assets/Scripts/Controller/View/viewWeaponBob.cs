@@ -70,6 +70,9 @@ public class viewWeaponBob : MonoBehaviour
     {
         float inputX = Input.GetAxis("Mouse X"),
               inputY = Input.GetAxis("Mouse Y");
+
+        // TODO: random teleporting on way, check it later
+        inputX = Mathf.Clamp(inputX, -swayIntensityX, swayIntensityX);
         
         float currentSwayTime = controller.isCrouching ? swayTime / 2f: swayTime;
         

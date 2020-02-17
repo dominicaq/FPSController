@@ -6,33 +6,31 @@ namespace Controller
     [RequireComponent(typeof(PlayerController))]
     public class PlayerSwim : MonoBehaviour
     {
-        [Header("Properties")] [SerializeField] [Range(1, 10)]
-        private float swimMovementSpeed = 7.0f;
-
+        [Header("Properties")]
+        public float swimMovementSpeed = 7.0f;
         private Vector3 swimVelocity;
         public float ascendRate = 10;
         public float descendRate = 5;
 
-        [Header("Components")] private PlayerController playerController;
-        private CharacterController charController;
+        [Header("Input")] 
+        private float horizontal;
+        private float vertical;
+        
+        [Header("Components")] 
+        private PlayerController playerController;
 
         private void Start()
         {
             playerController = GetComponent<PlayerController>();
-            charController = GetComponent<CharacterController>();
-
-            if (!playerController || !charController)
-                enabled = false;
         }
-
-        // Early version of swimming
+        
+        /// <summary> Gives player control of their y axis position a trigger </summary>
         public void SwimVelocityMovement()
         {
-            playerController.enableJumping = false;
-            playerController.isJumping = false;
-            playerController.isFlying = false;
-
-            swimVelocity = new Vector3(playerController.horizontal, 0, playerController.vertical);
+            horizontal = Input.GetAxis("Horizontal");
+            vertical = Input.GetAxis("Vertical");
+            
+            swimVelocity = new Vector3(horizontal, 0, vertical);
             float buoyancy = playerController.gravity;
 
             // Prevent excessive diagonal movement
@@ -47,7 +45,7 @@ namespace Controller
                     buoyancy = 3;
             }
 
-            if (buoyancy < -1 && !charController.isGrounded)
+            if (buoyancy < -1 && !playerController.characterController.isGrounded)
             {
                 buoyancy += -buoyancy * Time.deltaTime;
             }
@@ -64,30 +62,18 @@ namespace Controller
             swimVelocity = transform.rotation * swimVelocity;
             swimVelocity *= swimMovementSpeed;
             swimVelocity.y = buoyancy;
-            charController.Move(swimVelocity * Time.deltaTime);
-        }
-
-        private bool HeadWaterCheck()
-        {
-            float rayLength = 0.6f;
-            if (Physics.SphereCast(transform.position, charController.radius, Vector3.up, out RaycastHit hitInfo, rayLength))
-            {
-                //Debug.Log(hitInfo.collider.isTrigger);
-            }
-
-            return false;
+            playerController.characterController.Move(swimVelocity * Time.deltaTime);
         }
 
         private void OnTriggerStay(Collider other)
         {
             if (other.CompareTag("Water"))
                 playerController.isSwimming = true;
-
         }
 
         private void OnTriggerExit(Collider other)
         {
-            if (other.CompareTag("Water") && !HeadWaterCheck() && playerController.isSwimming)
+            if (other.CompareTag("Water") && playerController.isSwimming)
                 playerController.isSwimming = false;
         }
     }

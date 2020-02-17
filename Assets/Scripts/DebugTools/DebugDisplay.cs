@@ -22,7 +22,7 @@ namespace DebugTools
 		void Start()
 		{
 			style = new GUIStyle();
-			rect = new Rect(0, 0, w, h * 2 / 100);
+			rect = new Rect(0, 0, w, h);
 			style.alignment = TextAnchor.UpperLeft;
 
 			timeleft = updateInterval;

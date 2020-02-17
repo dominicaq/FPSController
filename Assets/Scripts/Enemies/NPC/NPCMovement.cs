@@ -21,17 +21,11 @@ namespace Enemies.NPC
 
         private void Update()
         {
-            if (targetObject)
+            if (Vector3.Distance(targetObject.position, transform.position) > 5)
             {
                 Vector3 targetVector = targetObject.transform.position;
                 navMeshAgent.SetDestination(targetVector);
             }
-        }
-
-        public void ToggleMovement(bool key)
-        {
-            navMeshAgent.enabled = key;
-            enabled = key;
         }
     }
 }

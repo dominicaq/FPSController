@@ -12,7 +12,7 @@ EditorBuildSettings:
     path: Assets/Scenes/DevEnvironment.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
   - enabled: 0
-    path: Assets/Scenes/BotTesting.unity
+    path: Assets/Scenes/TestRoom.unity
     guid: ced2a9c75630e3f48ae2118a7b0a5c07
   m_configObjects:
     com.unity.addressableassets: {fileID: 11400000, guid: 57602836ceffec8458b275bc6d55f301,

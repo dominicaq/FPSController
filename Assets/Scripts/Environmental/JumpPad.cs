@@ -26,7 +26,7 @@ namespace Environmental
                 // Zero for new force
                 forceModifier.velocity = Vector3.zero;
             
-                forceModifier.AddForce(strength);
+                forceModifier.AddYForce(strength);
                 audioData.Play(0);
             }
         }

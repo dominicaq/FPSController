@@ -1,5 +1,4 @@
 ﻿using Managers;
-using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -25,7 +24,7 @@ public class DevGun : MonoBehaviour
         {
             if (Physics.Raycast(cam.transform.position, cam.transform.forward, out RaycastHit hit, maxDistance, ignoreMask))
             {
-                Addressables.InstantiateAsync("ImpulseSphere", hit.point, quaternion.identity);
+                Addressables.InstantiateAsync("ImpulseSphere", hit.point, Quaternion.identity);
             }
         }
     }

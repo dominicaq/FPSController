@@ -2,7 +2,7 @@
 using Managers;
 using UnityEngine;
 
-// Note: Nothing but camera modifiers and input should mess with rotation
+// Note: Nothing but camera modifiers and input should edit rotation
 
 [RequireComponent(typeof(Camera))]
 public class PlayerCamera : MonoBehaviour
@@ -25,7 +25,6 @@ public class PlayerCamera : MonoBehaviour
 
     private void Start()
     {
-        // Camera properties
         cameraComponent = GetComponent<Camera>();
     }
 
@@ -48,16 +47,21 @@ public class PlayerCamera : MonoBehaviour
         transform.eulerAngles = inputDir;
     }
 
+    /// <summary> Get camera pitch </summary>
+    /// <returns>pitch</returns>
     public float GetPitch()
     {
         return pitch;
     }
 
+    // Maybe revise these two functions
+    /// <summary> Using a specified angle is the camera looking up? </summary>
     public bool IsLookingUp(float angle)
     {
         return pitch <= -angle;
     }
 
+    /// <summary> Using a specified angle is the camera looking down? </summary>
     public bool IsLookingDown(float angle)
     {
         return pitch >= angle;

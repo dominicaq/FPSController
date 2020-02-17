@@ -5,8 +5,7 @@ using UnityEngine;
 public class SteamLobbyManager : MonoBehaviour
 {
     // By default, the game will be Spacewar
-    // Use ShouldUpdate to update the UI, then disable once complete
-    
+
     #region Callbacks
 
     // Creation
@@ -62,9 +61,9 @@ public class SteamLobbyManager : MonoBehaviour
         }
     }
 
-    public void HostLobby(bool i_isPrivate)
+    public void HostLobby(bool iIsPrivate)
     {
-        if (i_isPrivate)
+        if (iIsPrivate)
             SteamMatchmaking.CreateLobby(ELobbyType.k_ELobbyTypeFriendsOnly, maxLobbySize);
         else
             SteamMatchmaking.CreateLobby(ELobbyType.k_ELobbyTypePublic, maxLobbySize);
