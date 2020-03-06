@@ -25,7 +25,7 @@ public class SteamManager : MonoBehaviour {
 	protected static SteamManager Instance {
 		get {
 			if (s_instance == null) {
-                return null;
+				return new GameObject("SteamManager").AddComponent<SteamManager>();
 			}
 			else {
 				return s_instance;
@@ -38,7 +38,7 @@ public class SteamManager : MonoBehaviour {
 	protected bool m_bInitialized;
 	public static bool Initialized {
 		get {
-			return Instance?.m_bInitialized ?? false;
+			return Instance.m_bInitialized;
 		}
 	}
 

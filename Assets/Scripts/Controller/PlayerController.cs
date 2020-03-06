@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using UnityEngine;
-using Managers;
 
 namespace Controller
 {
@@ -53,7 +52,7 @@ namespace Controller
         public bool
             isJumping,
             isCrouching,
-            isFlying,
+            isSliding,
             isClimbingLadder,
             isSwimming;
 
@@ -88,14 +87,13 @@ namespace Controller
         
         private void Start()
         {
-            cameraTransform = transform.GetChild(0);
-            
             // Movement components
             forceModifier = GetComponent<PlayerForce>();
             playerLadder = GetComponent<PlayerLadder>();
             playerSwim = GetComponent<PlayerSwim>();
+            cameraTransform = transform.GetChild(0);
             cameraProperties = cameraTransform.GetComponent<PlayerCamera>();
-
+            
             // Init Variables
             initPlayerHeight = characterController.height;
             initCenter = characterController.center;
@@ -106,20 +104,12 @@ namespace Controller
             initMoveSpeed = movementSpeed;
         }
 
-        private void Update()
-        {
-            if (!GameState.isPaused)
-            {
-                PlayerInput();
-            }
-        }
-        
         private void PlayerInput()
         {
             horizontal = Input.GetAxis("Horizontal");
             vertical = Input.GetAxis("Vertical");
 
-            if (Input.GetButtonDown("Jump") && enableJumping && !isSwimming)
+            if (Input.GetButtonDown("Jump") && enableJumping)
             {
                 Jump();
             }
@@ -143,8 +133,7 @@ namespace Controller
                 }
             }
         }
-
-        // Movement functions
+        
         private void LateUpdate()
         {
             if (isClimbingLadder)
@@ -160,29 +149,28 @@ namespace Controller
             else
             {
                 enableJumping = !isCrouching;
+                PlayerInput();
                 PlayerVelocity();
                 SlopeSliding();
             }
 
-            RotateBodyWithView();
+            Vector3 bodyRot = new Vector3(0, cameraTransform.eulerAngles.y, 0);
+            transform.eulerAngles = bodyRot;
         }
 
         private void PlayerVelocity()
         {
             gravity += Time.deltaTime * worldGravity;
             inputVelocity = new Vector3(horizontal, 0, vertical);
-
-            // Prevent player from excessive floating when jumping
-            if (HeadCheck() && isJumping && !isFlying && !isSwimming)
-                gravity = -0.5f;
-
-            // Prevent excessive diagonal movement
+            
             if (inputVelocity.sqrMagnitude > 1)
                 inputVelocity = inputVelocity.normalized;
-
-            // Finalization
-            inputVelocity = transform.rotation * inputVelocity;
-            inputVelocity *= movementSpeed;
+            
+            // Prevent player from excessive floating
+            if (HeadCheck() && isJumping)
+                gravity = -Mathf.Abs(gravity);
+            
+            inputVelocity = (transform.rotation * inputVelocity) * movementSpeed;
             inputVelocity.y = gravity;
             characterController.Move(inputVelocity * Time.deltaTime);
 
@@ -194,9 +182,9 @@ namespace Controller
             }
 
             // Downward force on unevenground
-            if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, 1.5f))
+            if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, characterController.height * .75f))
             {
-                if (hit.normal != Vector3.up && !isJumping && !isFlying)
+                if (hit.normal != Vector3.up && !isJumping)
                 {
                     float slopeStep = Time.deltaTime * 5;
                     characterController.Move(Vector3.down * slopeStep);
@@ -206,26 +194,20 @@ namespace Controller
 
         private void Jump()
         {
-            // Remove a jump if player is in air
-            if (!characterController.isGrounded && !isJumping)
+            jumpCounter += 1;
+
+            if (jumpCounter < maximumJumps + 1)
             {
-                jumpCounter += 1;
-            }
-            
-            if (isJumping && maximumJumps != jumpCounter)
-            {
-                jumpCounter += 1;
-            }
-            
-            if (characterController.isGrounded || jumpCounter != maximumJumps)
-            {
+                if(!characterController.isGrounded && maximumJumps == 1 || isSliding)
+                    return;
+                
                 forceModifier.AddYForce(jumpHeight);
             }
         }
 
         private void SlopeSliding()
         {
-            if (characterController.isGrounded && !isFlying)
+            if (characterController.isGrounded)
             {
                 Vector3 slopeDirection = Vector3.zero;
             
@@ -237,15 +219,15 @@ namespace Controller
             
                 if(slopeDirection.y <= -0.45f)
                 {
+                    isSliding = true;
                     currentSlideSpeed += Time.deltaTime * SlideRate;
                     characterController.Move(slopeDirection.normalized * currentSlideSpeed);
-                    enableJumping = false;
                 }
-                else
-                {
-                    currentSlideSpeed = 0;
-                    enableJumping = true;
-                }
+            }
+            else
+            {
+                isSliding = false;
+                currentSlideSpeed = 0;
             }
         }
         
@@ -321,12 +303,6 @@ namespace Controller
             }
         }
 
-        private void RotateBodyWithView()
-        {
-            Vector3 bodyRot = new Vector3(0, cameraTransform.eulerAngles.y, 0);
-            transform.eulerAngles = bodyRot;
-        }
-        
         /// <summary> Coroutine, change move speed to a new speed at a desired rate </summary>
         /// <param name="rate"></param> <param name="newSpeed"></param>
         public IEnumerator AdjustSpeed(float rate, float newSpeed)

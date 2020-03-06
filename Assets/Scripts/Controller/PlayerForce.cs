@@ -38,7 +38,7 @@ namespace Controller
                 else if (playerController.characterController.isGrounded)
                 {
                     velocity = Vector3.zero;
-                    playerController.isFlying = false;
+                    playerController.isJumping = false;
                     collidedWithWall = false;
                 }
             }
@@ -50,7 +50,7 @@ namespace Controller
             float rayLength = 0.5f;
             
             // Sphere cast or ray cast and is flying
-            bool isValid = (playerController.isFlying && 
+            bool isValid = (playerController.isJumping && 
                             Physics.SphereCast(transform.position, playerController.characterController.radius / 1.5f,velocity, out RaycastHit hitInfo, rayLength) ||
                             Physics.Raycast(transform.position, velocity));
 
@@ -64,7 +64,7 @@ namespace Controller
         /// <param name="dir"></param>
         public void AddForce(Vector3 dir)
         {
-            playerController.isFlying = true;
+            playerController.isJumping = true;
             collidedWithWall = false;
 
             playerController.gravity = 0;

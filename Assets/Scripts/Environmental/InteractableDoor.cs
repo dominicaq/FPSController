@@ -1,14 +1,15 @@
 ﻿using System;
 using UnityEngine;
 
-public class InteractableDoor : PlayerHandyMan
+public class InteractableDoor : Interactable
 {
     public bool isOpen = false;
-    public Animator doorAnim;
+    //public Animator doorAnim;
     
     public override void OnInteract()
     {
         isOpen = !isOpen;
-        doorAnim.SetBool("open", isOpen);
+        gameObject.SetActive(false);
+        //doorAnim.SetBool("open", isOpen);
     }
 }

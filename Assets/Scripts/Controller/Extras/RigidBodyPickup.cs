@@ -138,7 +138,7 @@ public class RigidBodyPickup : MonoBehaviour
     private void PickUp()
     {
         Ray interactRay = selfCam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-        if (Physics.Raycast(interactRay, out RaycastHit hit, interactArmLength, ~LayerMask.GetMask("Interactable")))
+        if (Physics.Raycast(interactRay, out RaycastHit hit, interactArmLength, ~LayerMask.GetMask("Interactive")))
         {
             heldObject = hit.transform;
             heldObjectRb = hit.rigidbody;

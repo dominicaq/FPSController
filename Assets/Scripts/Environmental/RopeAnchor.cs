@@ -1,9 +1,11 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 using UnityEngine.AddressableAssets;
 
 public class RopeAnchor : MonoBehaviour
 {
     private Rigidbody rb;
+
     private void Start()
     {
         rb = transform.GetComponent<Rigidbody>();
@@ -13,8 +15,16 @@ public class RopeAnchor : MonoBehaviour
 
     private void Update()
     {
-        Destroy(this);
+        StartCoroutine(Die());
     }
+
+    IEnumerator Die()
+    {
+        //play your sound
+        yield return new WaitForSeconds(1); //waits 3 seconds
+        Destroy(this); //this will work after 3 seconds.
+    }
+
 
     private void OnCollisionStay(Collision col)
     {

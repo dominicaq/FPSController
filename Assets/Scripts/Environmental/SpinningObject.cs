@@ -1,33 +1,29 @@
-﻿using Managers;
-using UnityEngine;
+﻿using UnityEngine;
 
-public class SpinningObject : EnvironmentalHandyMan
+public class SpinningObject : Interactable
 {
-    public float speed = 1.0f;
-    [Range(0.001f, 1)] public float acceleration = 1.0f;
-    public bool active = true;
-    private float currentSpeed;
-    void Update()
+    public Light lightBulb;
+    public float currentSpeed;
+    public float maxSpeed = 1.75f;
+    
+    public float accelerationRate = 0.1f;
+    public float decelerationRate = 0.05f;
+    public bool isActive = true;
+    
+    public void Update()
     {
-        if(!GameState.isPaused)
-            SpinTransform();
-    }
-
-    public void SpinTransform()
-    {
-        currentSpeed = Mathf.Clamp(currentSpeed, 0, speed);
-
-        if (active)
-            currentSpeed += acceleration;
+        if (isActive)
+            currentSpeed += accelerationRate * Time.deltaTime;
         else
-            currentSpeed -= acceleration;
-        
-        // Time is already applied within function
+            currentSpeed -= decelerationRate * Time.deltaTime;
+
+        currentSpeed = Mathf.Clamp(currentSpeed, 0, maxSpeed);
         transform.Rotate( currentSpeed, 0,  0);
     }
 
-    public override void OnActivation()
+    public override void OnInteract()
     {
-        active = !active;
+        isActive = !isActive;
+        lightBulb.color = isActive ? Color.green : Color.red;
     }
 }
