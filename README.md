@@ -10,9 +10,9 @@ Notable features:
 1. Smooth crouching	
 1. Sliding down steep terrain	
 1. Can walk up and any terrain smoothly	
-1. Can jump in air to a desired limit (1 by default)	
-# Incomplete	
-Can swim in triggers tagged as Water, will drift slowly down if no input detected (disabled by default)	
+1. Can jump in air to a desired limit (1 by default)
+1. Can swim in triggers tagged as Water, will drift slowly down if no input detected (disabled by default)	
+
 # Future Goals	
 Create a camera shake/ recoil system	
 Add networking support
