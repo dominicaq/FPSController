@@ -1,5 +1,4 @@
-﻿using Controller;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class viewBobbing : MonoBehaviour
 {

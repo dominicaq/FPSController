@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using Controller;
 using UnityEngine.AddressableAssets;
 
 namespace Environmental
@@ -12,6 +11,7 @@ namespace Environmental
         private PlayerForce forceModifier;
         private AudioSource audioData;
         private AssetReference jumpSfx;
+        
         private void Start() 
         {
             audioData = GetComponent<AudioSource>();

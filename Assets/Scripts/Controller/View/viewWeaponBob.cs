@@ -1,5 +1,4 @@
 ﻿using System;
-using Controller;
 using UnityEngine;
 
 public class viewWeaponBob : MonoBehaviour
@@ -15,21 +14,16 @@ public class viewWeaponBob : MonoBehaviour
     public float swayIntensityX = 10;
     public float swayIntensityY = 10;
     public float swayTime = 5;
-    private Vector3 smoothSway;
-
-    private PlayerController playerController;
-    private PlayerCamera myCamera;
+    private PlayerMovementManager m_movementManager;
 
     private float bobStep;
     void Start()
     {
         movingObject = transform.GetChild(0);
         currentPos = movingObject.localPosition;
-        playerController = transform.parent.GetComponent<PlayerController>();
-        myCamera = transform.GetComponent<PlayerCamera>();
+        m_movementManager = transform.parent.GetComponent<PlayerMovementManager>();
     }
     
-    // Update is called once per frame
     void Update()
     {
         InventoryBob();
@@ -40,7 +34,7 @@ public class viewWeaponBob : MonoBehaviour
     {
         float forwardInput = Input.GetAxisRaw("Vertical");
 
-        if (playerController.isCrouching)
+        if (m_movementManager.isCrouching)
             smoothWalkVelocity /= 1.2f;
         
         if (forwardInput < 0 || forwardInput > 0)
@@ -57,19 +51,16 @@ public class viewWeaponBob : MonoBehaviour
     
     private void InventorySway()
     {
-        float inputX = Mathf.Clamp(Input.GetAxis("Mouse X"), -2, 2),
-              inputY = Input.GetAxis("Mouse Y");
+        float inputX = Mathf.Clamp(Input.GetAxis("Mouse X"), -2, 2);
+        float inputY = Input.GetAxis("Mouse Y");
         
         Quaternion swayX = Quaternion.AngleAxis(swayIntensityX * inputX, Vector3.down);
         Quaternion swayY = Quaternion.AngleAxis(swayIntensityY * inputY, Vector3.right);
         Quaternion targetRot = swayX;
 
-        if (!myCamera.IsLookingUp(90) && !myCamera.IsLookingDown(90))
-        {
+        if (!m_movementManager.playerCamera.IsLookingUp(90) && !m_movementManager.playerCamera.IsLookingDown(90))
             targetRot *= swayY;
-        }
         
-        movingObject.localRotation = Quaternion.Lerp(movingObject.localRotation, targetRot, Time.deltaTime * swayTime);
-      
+        movingObject.localRotation = Quaternion.Lerp(movingObject.localRotation, targetRot, Time.deltaTime * swayTime); 
     }
 }

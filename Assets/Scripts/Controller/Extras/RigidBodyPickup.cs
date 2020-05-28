@@ -105,18 +105,19 @@ public class RigidBodyPickup : MonoBehaviour
             if (isColliding && isCarrying)
             {
                 float step =+ Time.smoothDeltaTime * moveRate;
-                Vector3 dist = heldObject.position - transform.position;
-                if (dist.sqrMagnitude < 0.6f)
-                {
-                    Physics.IgnoreCollision(heldObjectCollider, playerColl);
-                    canDrop = false;
-                }
-                else
-                {
-                    Physics.IgnoreCollision(heldObjectCollider, playerColl, false);
-                    canDrop = true;
-                }
                 heldObject.position = Vector3.Lerp(heldObject.position, holdVector, step / 2.5f);
+            }
+
+            Vector3 dist = heldObject.position - transform.position;
+            if (dist.sqrMagnitude <= 1.0f)
+            {
+                Physics.IgnoreCollision(heldObjectCollider, playerColl);
+                canDrop = false;
+            }
+            else
+            {
+                Physics.IgnoreCollision(heldObjectCollider, playerColl, false);
+                canDrop = true;
             }
         }
         else

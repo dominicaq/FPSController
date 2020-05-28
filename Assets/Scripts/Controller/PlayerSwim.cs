@@ -1,80 +1,75 @@
 ﻿using UnityEngine;
 
-namespace Controller
+[RequireComponent(typeof(PlayerController))]
+public class PlayerSwim : MonoBehaviour
 {
-    // Incomplete
-    [RequireComponent(typeof(PlayerController))]
-    public class PlayerSwim : MonoBehaviour
+    [Header("Properties")]
+    public float swimMovementSpeed = 7.0f;
+    public float ascendRate = 10;
+    public float descendRate = 5;
+    private Vector3 m_swimVelocity;
+
+    [Header("Input")] 
+    private float m_horizontal;
+    private float m_vertical;
+    
+    [Header("Components")] 
+    private PlayerMovementManager m_movementManager;
+
+    private void Start()
     {
-        [Header("Properties")]
-        public float swimMovementSpeed = 7.0f;
-        private Vector3 swimVelocity;
-        public float ascendRate = 10;
-        public float descendRate = 5;
-
-        [Header("Input")] 
-        private float horizontal;
-        private float vertical;
+        m_movementManager = GetComponent<PlayerMovementManager>();
+    }
+    
+    /// <summary> Gives player control of their y axis position a trigger </summary>
+    public void SwimVelocity()
+    {
+        m_horizontal = Input.GetAxis("Horizontal");
+        m_vertical = Input.GetAxis("Vertical");
         
-        [Header("Components")] 
-        private PlayerController playerController;
+        m_swimVelocity = new Vector3(m_horizontal, 0, m_vertical);
+        float buoyancy = m_movementManager.playerController.gravity;
 
-        private void Start()
+        if (m_swimVelocity.sqrMagnitude > 1)
+            m_swimVelocity = m_swimVelocity.normalized;
+
+        if (Input.GetButton("Jump"))
         {
-            playerController = GetComponent<PlayerController>();
-        }
-        
-        /// <summary> Gives player control of their y axis position a trigger </summary>
-        public void SwimVelocityMovement()
-        {
-            horizontal = Input.GetAxis("Horizontal");
-            vertical = Input.GetAxis("Vertical");
-            
-            swimVelocity = new Vector3(horizontal, 0, vertical);
-            float buoyancy = playerController.gravity;
+            buoyancy += ascendRate * Time.deltaTime;
 
-            // Prevent excessive diagonal movement
-            if (swimVelocity.sqrMagnitude > 1)
-                swimVelocity = swimVelocity.normalized;
-
-            if (Input.GetButton("Jump"))
-            {
-                buoyancy += ascendRate * Time.deltaTime;
-
-                if (buoyancy >= 3)
-                    buoyancy = 3;
-            }
-
-            if (buoyancy < -1 && !playerController.characterController.isGrounded)
-            {
-                buoyancy += -buoyancy * Time.deltaTime;
-            }
-            else
-            {
-                buoyancy -= descendRate * Time.deltaTime;
-
-                if (buoyancy <= -1)
-                    buoyancy = -1;
-            }
-
-            // Finalization
-            playerController.gravity = buoyancy;
-            swimVelocity = transform.rotation * swimVelocity;
-            swimVelocity *= swimMovementSpeed;
-            swimVelocity.y = buoyancy;
-            playerController.characterController.Move(swimVelocity * Time.deltaTime);
+            if (buoyancy >= 3)
+                buoyancy = 3;
         }
 
-        private void OnTriggerStay(Collider other)
+        if (buoyancy < -1 && !m_movementManager.controller.isGrounded)
         {
-            if (other.CompareTag("Water"))
-                playerController.isSwimming = true;
+            buoyancy += -buoyancy * Time.deltaTime;
+        }
+        else
+        {
+            buoyancy -= descendRate * Time.deltaTime;
+
+            if (buoyancy <= -1)
+                buoyancy = -1;
         }
 
-        private void OnTriggerExit(Collider other)
-        {
-            if (other.CompareTag("Water") && playerController.isSwimming)
-                playerController.isSwimming = false;
-        }
+        // Finalization
+        m_movementManager.playerController.gravity = buoyancy;
+        m_swimVelocity = transform.rotation * m_swimVelocity;
+        m_swimVelocity *= swimMovementSpeed;
+        m_swimVelocity.y = buoyancy;
+        m_movementManager.controller.Move(m_swimVelocity * Time.deltaTime);
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        if (other.CompareTag("Water"))
+            m_movementManager.isSwimming = true;
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Water") && m_movementManager.isSwimming)
+            m_movementManager.isSwimming = false;
     }
 }

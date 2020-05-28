@@ -1,62 +1,58 @@
 ﻿using UnityEngine;
 
-namespace Controller
+[RequireComponent(typeof(PlayerController))]
+public class PlayerLadder : MonoBehaviour
 {
-    [RequireComponent(typeof(PlayerController))]
-    public class PlayerLadder : MonoBehaviour
+    [Header("Properties")] 
+    [Range(-90, 90)] public float ladderAngle = 15.0f;
+
+    [Header("Input")] 
+    private float m_horizontal;
+    private float m_vertical;
+    
+    private PlayerMovementManager m_movementManager;
+
+    private void Start()
     {
-        [Header("Properties")] 
-        [SerializeField] [Range(-90, 90)]
-        private float ladderAngle = 15.0f;
+        m_movementManager = GetComponent<PlayerMovementManager>();
+    }
 
-        [Header("Input")] 
-        private float horizontal;
-        private float vertical;
+    /// <summary> Moves player up and down y axis </summary>
+    public void LadderVelocity()
+    {
+        m_horizontal = Input.GetAxis("Horizontal");
+        m_vertical = Input.GetAxis("Vertical");
         
-        private PlayerController playerController;
+        m_movementManager.playerController.gravity = 0;
 
-        private void Start()
+        Vector3 ladderVelocity;
+        if (!m_movementManager.controller.isGrounded)
         {
-            playerController = GetComponent<PlayerController>();
+            ladderVelocity = new Vector3(m_horizontal, m_vertical, 0);
+        }
+        else
+        {
+            ladderVelocity = new Vector3(m_horizontal, m_vertical, m_vertical);
         }
 
-        /// <summary> Moves player up and down y axis </summary>
-        public void LadderVelocity()
-        {
-            horizontal = Input.GetAxis("Horizontal");
-            vertical = Input.GetAxis("Vertical");
-            
-            playerController.gravity = 0;
+        if (m_movementManager.playerCamera.IsLookingDown(ladderAngle))
+            ladderVelocity.y = -m_vertical;
 
-            Vector3 ladderVelocity;
-            if (!playerController.characterController.isGrounded)
-            {
-                ladderVelocity = new Vector3(horizontal, vertical, 0);
-            }
-            else
-            {
-                ladderVelocity = new Vector3(horizontal, vertical, vertical);
-            }
+        float moveRate =  Mathf.Clamp(Mathf.Abs(m_movementManager.playerCamera.GetPitch()), 0, 2) * 2;
+        ladderVelocity *= moveRate;
+        Vector3 ladderDirection = transform.rotation * ladderVelocity;
+        m_movementManager.controller.Move(ladderDirection * Time.deltaTime);
+    }
 
-            if (playerController.cameraProperties.IsLookingDown(ladderAngle))
-                ladderVelocity.y = -vertical;
+    private void OnTriggerStay(Collider other)
+    {
+        if (!m_movementManager.isSwimming && other.CompareTag("Ladder"))
+            m_movementManager.isClimbingLadder = true;
+    }
 
-            float moveRate =  Mathf.Clamp(Mathf.Abs(playerController.cameraProperties.GetPitch()), 0, 2);
-            ladderVelocity *= moveRate * 2;
-            Vector3 ladderDirection = transform.rotation * ladderVelocity;
-            playerController.characterController.Move(ladderDirection * Time.deltaTime);
-        }
-
-        private void OnTriggerStay(Collider other)
-        {
-            if (!playerController.isSwimming && other.CompareTag("Ladder"))
-                playerController.isClimbingLadder = true;
-        }
-
-        private void OnTriggerExit(Collider other)
-        {
-            if (playerController.isClimbingLadder)
-                playerController.isClimbingLadder = false;
-        }
+    private void OnTriggerExit(Collider other)
+    {
+        if (m_movementManager.isClimbingLadder)
+            m_movementManager.isClimbingLadder = false;
     }
 }
