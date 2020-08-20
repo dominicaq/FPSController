@@ -1,0 +1,15 @@
+{
+    "name": "Player",
+    "references": [
+        "GUID:8af5ef1ca2fa71149ab591b04f282375"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

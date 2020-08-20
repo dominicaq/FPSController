@@ -1,15 +1,24 @@
 ﻿using UnityEngine;
 
-public class SpinningObject : Interactable
+public class SpinningObject : MonoBehaviour, IListener
 {
-    public Light lightBulb;
-    public float currentSpeed;
-    public float maxSpeed = 1.75f;
-    
-    public float accelerationRate = 0.1f;
-    public float decelerationRate = 0.05f;
     public bool isActive = true;
+    public Light lightBulb;
+
+    [Header("Speed Properties")]
+    public float currentSpeed;
+    public float maxSpeed = 200f;
+    public float accelerationRate = 20f;
+    public float decelerationRate = 20f;
     
+    private void Start() 
+    {
+        if(isActive)
+            OnActivate();
+        else
+            OnDeactivate();    
+    }
+
     public void Update()
     {
         if (isActive)
@@ -18,12 +27,18 @@ public class SpinningObject : Interactable
             currentSpeed -= decelerationRate * Time.deltaTime;
 
         currentSpeed = Mathf.Clamp(currentSpeed, 0, maxSpeed);
-        transform.Rotate( currentSpeed, 0,  0);
+        transform.Rotate(Vector3.right * currentSpeed * Time.deltaTime);
     }
 
-    public override void OnInteract()
+    public void OnActivate()
     {
-        isActive = !isActive;
-        lightBulb.color = isActive ? Color.green : Color.red;
+        isActive = true;
+        lightBulb.color = Color.green;
+    }
+
+    public void OnDeactivate()
+    {
+        isActive = false;
+        lightBulb.color = Color.red;
     }
 }

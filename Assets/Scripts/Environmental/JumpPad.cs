@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using UnityEngine.AddressableAssets;
 
 namespace Environmental
 {
@@ -8,26 +7,22 @@ namespace Environmental
         public float strength = 2;
     
         [Header("Components")]
-        private PlayerForce forceModifier;
-        private AudioSource audioData;
-        private AssetReference jumpSfx;
+        private AudioSource m_AudioSource;
         
         private void Start() 
         {
-            audioData = GetComponent<AudioSource>();
+            m_AudioSource = GetComponent<AudioSource>();
         }
 
         private void OnTriggerEnter(Collider other)
         {
-            if (other.CompareTag("Player"))
+            PlayerForce forceModifier = other.GetComponent<PlayerForce>();
+            if (forceModifier)
             {
-                forceModifier = other.GetComponent<PlayerForce>();
-
-                // Zero for new force
                 forceModifier.velocity = Vector3.zero;
-            
                 forceModifier.AddYForce(strength);
-                audioData.Play(0);
+
+                m_AudioSource.Play(0);
             }
         }
     } 

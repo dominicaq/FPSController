@@ -277,7 +277,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1733176501003871739}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -15.71, y: 1.034266, z: -13.33}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 439232834976470696}
@@ -318,6 +318,7 @@ MonoBehaviour:
   gravity: -14
   velocity: 7
   angle: 45
+  speed: NaN
   showGraph: 1
 --- !u!1 &5302155734398168779
 GameObject:
