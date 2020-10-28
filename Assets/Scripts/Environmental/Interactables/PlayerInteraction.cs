@@ -8,22 +8,19 @@ public class PlayerInteraction : MonoBehaviour
 
     private void Start()
     {
-        m_Camera       = GetComponent<Camera>();
+        m_Camera       = transform.GetChild(0).GetChild(0).GetComponent<Camera>();
         m_InteractMask = LayerMask.GetMask("Interactive");
     }
 
-    void Update()
+    public void Use()
     {
-        if (Input.GetButtonDown("Interact"))
+        Ray ray = m_Camera.ViewportPointToRay(new Vector3(0.5F, 0.5F, 0));
+        if (Physics.Raycast(ray, out RaycastHit hit, interactDistance, m_InteractMask))
         {
-            Ray ray = m_Camera.ViewportPointToRay(new Vector3(0.5F, 0.5F, 0));
-            if (Physics.Raycast(ray, out RaycastHit hit, interactDistance, m_InteractMask))
-            {
-                IInteractable targetInteractable = hit.collider.GetComponent<IInteractable>();
+            IInteractable targetInteractable = hit.collider.GetComponent<IInteractable>();
 
-                if(targetInteractable != null)
-                    targetInteractable.OnInteract();
-            }
+            if(targetInteractable != null)
+                targetInteractable.OnInteract();
         }
     }
 }

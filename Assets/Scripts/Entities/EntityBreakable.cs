@@ -22,7 +22,7 @@ public class EntityBreakable : EntityHealth
                 Instantiate(items[i], transform.position, transform.rotation);
                 Rigidbody rb = items[i].GetComponent<Rigidbody>();
 
-                if(!rb)
+                if(rb)
                 {
                     Vector3 force = new Vector3(Random.Range(-1.0f, 1.0f), 1.0f, Random.Range(-1.0f, 1.0f));
                     rb.AddForce(force * 200);

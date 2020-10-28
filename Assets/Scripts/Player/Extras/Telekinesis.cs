@@ -1,13 +1,12 @@
 ﻿using UnityEngine;
-using Managers;
 
-public class RigidBodyPickup : MonoBehaviour
+public class Telekinesis : MonoBehaviour
 {
-    [Header("Properties")] 
-    public float throwStrength = 3;
-    public float interactArmLength = 2.0f;
-    public float liftCapacity = 2;
+    [Header("Properties")]
+    public float useDistance = 2.0f;
     [Range(1, 15)] public float moveRate = 15;
+    public float liftCapacity = 2;
+    public float throwStrength = 3;
 
     #region Conditions
     private bool m_IsCarrying;
@@ -27,28 +26,31 @@ public class RigidBodyPickup : MonoBehaviour
     #endregion
 
     #region Player
+
     private Collider m_PlayerColl;
     private Camera m_Camera;
-    private PlayerCamera m_PlayerCamera;
+    private CameraController m_CameraController;
+    private Transform tCamera;
     private int m_IgnoreMask;
 
     #endregion
 
+    // Test
+    // TODO: turn this script into a ability
+
     private void Start()
     {
-        m_PlayerCamera = GetComponent<PlayerCamera>();
-        m_Camera       = GetComponent<Camera>();
-        m_PlayerColl   = GetComponentInParent<Collider>();
+        tCamera = transform.GetChild(0).GetChild(0);
+        m_CameraController = tCamera.GetComponent<CameraController>();
+        m_Camera       = tCamera.GetComponent<Camera>();
+        m_PlayerColl   = GetComponent<Collider>();
         
         m_IgnoreMask = Physics.DefaultRaycastLayers & ~LayerMask.GetMask("Player");
     }
 
-    private void Update()
+    public void Use()
     {
-        if(GameState.isPaused)
-            return;
-        //m_Input.currentInput.InteractInput
-        if (Input.GetButtonDown("Interact") && m_CanDrop)
+        if (m_CanDrop)
         {
             if (!m_IsCarrying)
             {
@@ -59,15 +61,22 @@ public class RigidBodyPickup : MonoBehaviour
                 Drop();
             }
         }
+    }
 
+    public void Fire()
+    {
+        ThrowObject(m_HeldObjectRb);
+    }
+
+    private void Update()
+    {
         if(m_IsCarrying)
         {
             m_HeldObjectBounds = m_HeldObjectCollider.bounds;
             m_IsColliding = Physics.CheckBox(m_HeldObject.position, m_HeldObjectBounds.size / 2, m_HeldObject.rotation, m_IgnoreMask, QueryTriggerInteraction.Ignore);
             MaintainDistance();
 
-            if (Input.GetButton("Fire1") && m_CanDrop)
-                ThrowObject(m_HeldObjectRb);
+            // Fire was here
 
             // Movement for no collisions
             if (m_HeldObject && !m_IsColliding)
@@ -75,7 +84,7 @@ public class RigidBodyPickup : MonoBehaviour
                 float step = Time.deltaTime * moveRate;
                 m_HeldObject.position = Vector3.Lerp(m_HeldObject.position, GetPrefferedPosition(), step);
             
-                Quaternion targetRot = transform.parent.rotation;
+                Quaternion targetRot = transform.rotation;
                 m_HeldObject.rotation = Quaternion.RotateTowards(m_HeldObject.rotation, targetRot, step * 25);
             }
         }
@@ -103,22 +112,22 @@ public class RigidBodyPickup : MonoBehaviour
     private Vector3 GetPrefferedPosition()
     {
         Vector3 forwardVector = Vector3.forward * 1.75f;
-        Vector3 playerEuler = transform.rotation * forwardVector;
+        Vector3 viewEuler = tCamera.rotation * forwardVector;
 
         // If the player is looking down, clamp preffered position
-        if (m_PlayerCamera.pitch >= 25)
-        {
-            playerEuler = transform.parent.rotation * forwardVector;
-            playerEuler.y = -.50f;
+        if (m_CameraController.pitch >= 25)
+        {   
+            viewEuler = transform.rotation * forwardVector;
+            viewEuler.y = -.50f;
         }
 
-        return transform.position + playerEuler;
+        return tCamera.position + viewEuler;
     }
 
     private void MaintainDistance()
     {
         Vector3 dist = m_HeldObject.position - transform.position;
-        if (dist.sqrMagnitude > interactArmLength + 5f)
+        if (dist.sqrMagnitude > useDistance + 5f)
         {
             Drop();
         }
@@ -137,7 +146,7 @@ public class RigidBodyPickup : MonoBehaviour
     private void PickUp()
     {
         Ray interactRay = m_Camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-        if (Physics.Raycast(interactRay, out RaycastHit hit, interactArmLength, ~LayerMask.GetMask("Interactive")))
+        if (Physics.Raycast(interactRay, out RaycastHit hit, useDistance, ~LayerMask.GetMask("Interactive")))
         {
             if (hit.rigidbody && hit.rigidbody.mass <= liftCapacity)
             {
@@ -150,7 +159,7 @@ public class RigidBodyPickup : MonoBehaviour
                 m_HeldObjectRb.useGravity     = false;
                 
                 m_IsCarrying = true;
-                SetActiveWeapons(false);   
+                m_CameraController.SetViewModel(false);
             }
         }
     }
@@ -166,12 +175,7 @@ public class RigidBodyPickup : MonoBehaviour
         m_HeldObjectRb       = null;
         
         m_IsCarrying = false;
-        SetActiveWeapons(true);
-    }
-    
-    private void SetActiveWeapons(bool condition)
-    {
-        transform.GetChild(0).gameObject.SetActive(condition);
+        m_CameraController.SetViewModel(true);
     }
 
     private void NullifyRbVelocity(Rigidbody body)

@@ -41,7 +41,7 @@ TagManager:
   - 
   - 
   - 
-  - Ignore Player
+  - InvisibleToPlayer
   - ViewModel
   - PostProcessingLayer
   m_SortingLayers:

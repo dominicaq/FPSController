@@ -1,18 +1,18 @@
 ﻿using UnityEngine;
 
-[RequireComponent(typeof(PlayerController))]
+[RequireComponent(typeof(BaseController))]
 public class PlayerForce : MonoBehaviour
 {
     public Vector3 velocity = Vector3.zero;
     private bool m_Collided;
     private bool m_isKnockback;
-    private CharacterController m_Controller;
-    private PlayerController m_PlayerControler;
+    private PlayerStateManager stateManager;
+    private CharacterController m_CharacterController;
 
-    private void Start()
+    private void Awake()
     {
-        m_PlayerControler = GetComponent<PlayerController>();
-        m_Controller      = GetComponent<CharacterController>();
+        stateManager          = GetComponent<PlayerStateManager>();
+        m_CharacterController = GetComponent<CharacterController>();
     }
 
     private void LateUpdate()
@@ -21,26 +21,23 @@ public class PlayerForce : MonoBehaviour
         {
             float decelerate = 1;
 
-            if (m_Collided && !m_Controller.isGrounded)
+            if (m_Collided && ! m_CharacterController.isGrounded)
                 decelerate = 2.5f;
 
-            if(m_Controller.isGrounded)
+            if(m_CharacterController.isGrounded)
                 decelerate = 5.0f;
 
             // Decelerate on ground or head bump
-            if(m_PlayerControler.HeadCheck() || (m_Controller.isGrounded && !m_isKnockback))
-            {
+            if(stateManager.protagonist.activeController.ObjectAbove() || (m_CharacterController.isGrounded && !m_isKnockback)) {
                 velocity.y = 0;
                 decelerate = 5f;
             }
-                
+
             velocity = Vector3.Lerp(velocity, Vector3.zero, decelerate * Time.deltaTime);
             
             if (velocity.magnitude > 1 || velocity.magnitude < -1)
-            {
-                m_Controller.Move(velocity * Time.deltaTime);
-            }
-            else if (m_Controller.isGrounded)
+                m_CharacterController.Move(velocity * Time.deltaTime);
+            else if (m_CharacterController.isGrounded)
             {
                 velocity = Vector3.zero;
                 m_Collided = false;
@@ -50,10 +47,8 @@ public class PlayerForce : MonoBehaviour
 
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
-        float rayLength = 0.5f;
-        
         // Sphere cast or ray cast and is flying
-        m_Collided = Physics.SphereCast(transform.position, m_Controller.radius / 1.5f, velocity, out RaycastHit hitInfo, rayLength) ||
+        m_Collided = Physics.SphereCast(transform.position, m_CharacterController.radius / 1.5f, velocity, out RaycastHit hitInfo, 0.5f) ||
                      Physics.Raycast(transform.position, velocity);
     }
     
@@ -62,14 +57,13 @@ public class PlayerForce : MonoBehaviour
         m_isKnockback = isKnockback;
         m_Collided = false;
 
-        m_PlayerControler.gravity = 0;
+        stateManager.protagonist.activeController.currentGravity = 0;
         velocity -= Vector3.Reflect(dir, Vector3.zero);
     }
     
     public void AddYForce(float upwardForce)
     {
-        m_PlayerControler.isJumping = true;
-        m_PlayerControler.gravity = upwardForce;
+        stateManager.protagonist.activeController.currentGravity = upwardForce;
     }
 
     private void OnDrawGizmosSelected()

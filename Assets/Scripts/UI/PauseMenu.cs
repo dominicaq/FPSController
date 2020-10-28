@@ -1,30 +1,22 @@
 ﻿using Managers;
-using Steamworks;
 using UnityEngine;
 
 public class PauseMenu : MonoBehaviour
 {
+    public MenuInputReader inputReader;
     public GameObject pauseMenu, settingsMenu;
 
-    private void Start()
-    {
-        Resume();
+	private void OnEnable()
+	{
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+
+        inputReader.pauseEvent += OnPause;
     }
 
-    // Start is called before the first frame update
-    void Update()
-    {
-        if(Input.GetKeyDown(KeyCode.Escape))
-        {
-            if (GameState.isPaused)
-            {
-                Resume();
-            }
-            else
-            {
-                Pause();
-            }
-        }
+    private void OnDisable()
+	{
+        inputReader.pauseEvent -= OnPause;
     }
 
     public void Resume()
@@ -47,10 +39,22 @@ public class PauseMenu : MonoBehaviour
         GameState.isPaused = true;
     }
 
+    private void OnPause()
+    {
+        if(GameState.isPaused)
+        {
+            Resume();
+        }
+        else
+        {
+            Pause();
+        }
+    }
+
     public void Settings()
     {
-        pauseMenu.SetActive(false);
-        settingsMenu.SetActive(true);
+        //pauseMenu.SetActive(false);
+        //settingsMenu.SetActive(true);
     }
     
     public void Quit()

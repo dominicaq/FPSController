@@ -1,102 +1,88 @@
 ﻿using System;
 using UnityEngine;
-using PlayerStates;
+using ControlStates;
 
-namespace PlayerStates
+namespace ControlStates
 {
-    public enum PlayerState
+    public enum ControlState
     {
-        Idle,
-        Walking,
-        Jumping,
-        Crouching,
-        Ladder,
+        Main,
         Swimming,
-        Charging
+        Climbing,
+        NONE
     };
 }
 
 public class PlayerStateManager : MonoBehaviour
 {
     #region Componenets
-
-    [NonSerialized] public PlayerController playerController;
-    [NonSerialized] public PlayerLadder playerLadder;
-    [NonSerialized] public PlayerSwim playerSwim;
-    [NonSerialized] public PlayerCharge playerCharge;
+    public ControlState currentControlState = ControlState.NONE;
+    public BaseController currentController;
+    [System.NonSerialized] public BaseController[] availableControllers;
+    [System.NonSerialized] public Protagonist protagonist;
     
     #endregion
 
-    #region Movement
-    public float controlModifier = 1.0f;
-
-    public PlayerState currentState;
-
-    #endregion
-
-    void Start()
+    private void Awake()
     {
-        playerController = GetComponent<PlayerController>();
-        playerLadder     = GetComponent<PlayerLadder>();
-        playerSwim       = GetComponent<PlayerSwim>();
-        playerCharge     = GetComponent<PlayerCharge>();
+        availableControllers = GetComponents<BaseController>();
+        protagonist = GetComponent<Protagonist>();
+
+        SwitchController(availableControllers[0]);
+        currentControlState = ControlState.Main;
     }
 
-    void LateUpdate()
+    private void Update()
     {
-        // Rework to statemachine, then transfer it over to when I make enemies
-        if(!playerController.enableInput)
-            return;
-
-        switch(currentState)
-        {
-            case PlayerState.Ladder :
-            {
-                playerLadder.LadderVelocity();
-                break;
-            }
-            case PlayerState.Swimming :
-            {
-                playerSwim.SwimVelocity();
-                break;
-            }
-            default :
-            {
-                playerController.PlayerVelocity(controlModifier);
-                playerController.SlopeSliding();
-                playerController.PlayerInput();
-                States();
-                break;
-            }       
-        }
+        if(protagonist.activeController)
+            protagonist.activeController.Tick();
     }
 
-    private void States()
+    public void SwitchController(BaseController newController)
     {
-        if(playerCharge.isCharging)
-        {
-            currentState = PlayerState.Charging;
+        if(newController == currentController)
             return;
+        
+        if(currentControlState != ControlState.NONE)
+        {
+            newController.currentGravity = currentController.currentGravity;
+            newController.inputVector = currentController.inputVector;
+            currentController.OnExit();
         }
 
-        if(playerController.isJumping)
-        {
-            currentState = PlayerState.Jumping;
-            return;
-        }
+        currentController = newController;
+        currentController.OnEnter();
+        protagonist.activeController = currentController;
+    }
 
-        if(playerController.isCrouching)
+    // Redo this?
+    private void OnTriggerEnter(Collider other)
+    {
+        if (currentControlState != ControlState.Swimming && other.CompareTag("Ladder"))
         {
-            currentState = PlayerState.Crouching;
-            return;
-        }
-
-        if(playerController.characterController.velocity.sqrMagnitude != 0)
-        {
-            currentState = PlayerState.Walking;
-            return;
+            SwitchController(availableControllers[1]);
+            currentControlState = ControlState.Climbing;
         }
             
-        currentState = PlayerState.Idle;
+        if (other.CompareTag("Water"))
+        {
+            SwitchController(availableControllers[2]);
+            currentControlState = ControlState.Swimming;
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Ladder") && currentControlState == ControlState.Climbing)
+        {
+            SwitchController(availableControllers[0]);
+            currentControlState = ControlState.Main;
+        }
+
+        if (other.CompareTag("Water") && currentControlState == ControlState.Swimming)
+        {
+            SwitchController(availableControllers[0]);
+            currentControlState = ControlState.Main;
+        }
     }
 }

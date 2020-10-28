@@ -1,7 +1,8 @@
 ﻿using System.Collections;
 using UnityEngine;
-using PlayerStates;
 
+
+// Requires a overhaul
 public class PlayerCharge : MonoBehaviour
 {
     public float duration= 1.5f;
@@ -15,14 +16,14 @@ public class PlayerCharge : MonoBehaviour
 
     #region Components
     private PlayerController m_PlayerController;
-    private PlayerCamera m_pCamera;
+    private CameraController m_pCamera;
 
     #endregion
 
     void Start()
     {
         m_PlayerController = GetComponent<PlayerController>();
-        m_pCamera          = transform.GetChild(0).GetComponent<PlayerCamera>();
+        m_pCamera          = transform.GetChild(0).GetComponent<CameraController>();
     }
 
     void LateUpdate()
@@ -31,7 +32,7 @@ public class PlayerCharge : MonoBehaviour
         {
             m_CanCharge = false;
             isCharging = true;
-            m_PlayerController.enableCrouching = false;
+            //m_PlayerController.enableCrouching = false;
         }
             
         if (isCharging)
@@ -45,9 +46,7 @@ public class PlayerCharge : MonoBehaviour
             if(m_PlayerController.characterController.isGrounded)
             {
                 isCharging = false;
-                m_PlayerController.enableCrouching = true;
-                
-                m_pCamera.turnRate = m_pCamera.mouseSensitivity;
+                //m_PlayerController.enableCrouching = true;
                 m_CurrentDuration = 0;
             }
 
@@ -57,7 +56,6 @@ public class PlayerCharge : MonoBehaviour
 
     private void Charge()
     {
-        m_pCamera.turnRate = turnRate;
         Vector3 chargeVelocity = transform.forward + Vector3.down * .1f;
         m_PlayerController.characterController.Move(chargeVelocity * Time.deltaTime * speed);
     }
