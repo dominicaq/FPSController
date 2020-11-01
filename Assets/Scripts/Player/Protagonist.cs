@@ -3,16 +3,15 @@
 public class Protagonist : MonoBehaviour
 {
 	public InputReader inputReader;
-	private PlayerStateManager stateManager;
-	public BaseController activeController;
-	private CameraController cameraController;
+	public PlayerStateManager stateManager;
+	[System.NonSerialized] public CameraController cameraController;
 
 	// Temporary ----
 	private Telekinesis telekinesis;
-	private PlayerInteraction worldInteract;
+	private AbilityManager abilityManager;
 	// Temporary ----
 	
-	private Transform m_CamTransform;
+	public Transform cameraTransform;
 
     public bool controlsEnabled = true;
     public bool crouchEnabled = true;
@@ -21,22 +20,21 @@ public class Protagonist : MonoBehaviour
     private void Awake() 
     {
 		stateManager = GetComponent<PlayerStateManager>();
-
+		abilityManager = GetComponent<AbilityManager>();
+		
 		// Section this off later
 		telekinesis = GetComponent<Telekinesis>();
-		worldInteract = GetComponent<PlayerInteraction>();
         //
 
-		m_CamTransform = transform.GetChild(0).GetChild(0);
-		cameraController = m_CamTransform.GetComponent<CameraController>();
+		cameraTransform = transform.GetChild(0).GetChild(0);
+		cameraController = cameraTransform.GetComponent<CameraController>();
     }
 
 	private void OnEnable()
 	{
 		inputReader.moveEvent += OnMove;
-		inputReader.jumpEvent += OnJump;
 		inputReader.cameraMoveEvent += OnMoveCamera;
-
+		inputReader.jumpEvent += OnJump;
 		inputReader.crouchEvent += OnCrouch;
 		
 		inputReader.useEvent += OnUse;
@@ -46,9 +44,8 @@ public class Protagonist : MonoBehaviour
     private void OnDisable()
 	{
 		inputReader.moveEvent -= OnMove;
-		inputReader.jumpEvent -= OnJump;
 		inputReader.cameraMoveEvent -= OnMoveCamera;
-
+		inputReader.jumpEvent -= OnJump;
 		inputReader.crouchEvent -= OnCrouch;
 		
 		inputReader.useEvent -= OnUse;
@@ -59,7 +56,7 @@ public class Protagonist : MonoBehaviour
     {
 		if (controlsEnabled)
 		{
-			worldInteract.Use();
+			//abilityManager.currentActiveAbility.Use();
 			telekinesis.Use();
 		}
     }
@@ -67,13 +64,13 @@ public class Protagonist : MonoBehaviour
 	private void OnCrouch()
 	{
 		if(controlsEnabled && crouchEnabled)
-			activeController.Crouch(inputReader.enableCrouchToggle);
+			stateManager.currentController.Crouch(inputReader.enableCrouchToggle);
 	}
 
     private void OnMove(Vector2 movement)
 	{
 		if (controlsEnabled)
-			activeController.Move(movement);
+			stateManager.currentController.Move(movement);
 	}
 
 	private void OnMoveCamera(Vector2 movement)
@@ -85,6 +82,6 @@ public class Protagonist : MonoBehaviour
     private void OnJump()
 	{
 		if (controlsEnabled)
-			activeController.Jump();
+			stateManager.currentController.Jump();
 	}
 }

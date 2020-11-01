@@ -40,7 +40,7 @@ TagManager:
   - 
   - 
   - 
-  - 
+  - IgnorePlayerRay
   - InvisibleToPlayer
   - ViewModel
   - PostProcessingLayer

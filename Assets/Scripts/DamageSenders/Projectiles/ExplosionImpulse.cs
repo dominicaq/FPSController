@@ -30,7 +30,7 @@ namespace Projectiles
 
                 PlayerForce forceModifier = hit.GetComponent<PlayerForce>();
                 if (forceModifier)
-                    forceModifier.AddForce(dir * strength, false);
+                    forceModifier.AddForce(dir * strength);
 
                 Rigidbody hitRb = hit.GetComponent<Rigidbody>();
                 if (hitRb)

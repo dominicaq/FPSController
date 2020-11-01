@@ -69,7 +69,7 @@ public class Sentry : EntityHealth
         {
             StartCoroutine(DamageInterval());
             m_EntityHP.SendDamage(fireDamage);
-            m_ForceModifier.AddForce(-m_SentryHead.forward * (fireDamage + 1), true);
+            m_ForceModifier.AddForce(-m_SentryHead.forward * (fireDamage + 1));
         }
     }
 
