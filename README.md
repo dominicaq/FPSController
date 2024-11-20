@@ -1,3 +1,10 @@
+# Disclaimer
+This project is **old**! I was new to game development and programming when creating this. 
+Some fundamentals may be a little off (for example, I have multiple characterController.Move() calls in a single frame).
+The logic is definitely not mathmatically correct either; I was mostly going for game "feel" at the time.
+
+With this knowledge, clone, fork, do whatever you like! :)
+
 # FPSController	
 The goal of this controller was to mimic how Valves character controller feels in TF2.	
 
